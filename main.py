@@ -46,16 +46,22 @@ time_milliseconds = 5000  # Setting the time to be used for auto closing windows
 # dialog_btn.pack()
 # gui_win.mainloop()
 
-root = Tk()
-root.directory = filedialog.askdirectory(initialdir="C:/", title="Files Location")
-print(root.directory)
+# root = Tk()
+# root.directory = filedialog.askdirectory(initialdir="C:/", title="Files Location")
+# print(root.directory)
 
-ipath = askdirectory()
-print(ipath)
-opath = askdirectory()
+ipath = Tk()
+ipath.withdraw()
+ipath.directory = filedialog.askdirectory(initialdir="C:/", title="Input Directory for CFS Files")
+print(ipath.directory)
+
+opath = Tk()
+opath.withdraw()
+opath.directory = filedialog.askdirectory(initialdir="C:/", title="Output Directory for CFS Translation Results")
 print(opath)
+
 print("Using glob.glob")
-CSV_Files_CSV = glob.glob(ipath + '/*')
+CSV_Files_CSV = glob.glob(ipath.directory + '/*')
 # Show all the files that were identified
 # for file in CSV_Files_CSV:
 #   print(file)
@@ -111,7 +117,7 @@ for f in CSV_Files_CSV:
         temp_df = temp_df.rename(columns=lambda name: name.replace('_', ' '))
         # Create a new processed sheet for each agency
         # temp_df.to_csv(f"C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME/Processed_{agency}", index=False)
-        temp_df.to_csv(f"{opath}/Processed_{agency}", index=False)
+        temp_df.to_csv(f"{opath.directory}/Processed_{agency}", index=False)
         # add it to the list
         li.append(temp_df)
         # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
@@ -130,7 +136,7 @@ for f in CSV_Files_CSV:
         temp_df = temp_df[temp_df.columns.intersection(final_columns)]
         liz.append(temp_df)
         # temp_df.to_csv(f"C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME/zz_{agency}", index=False)
-        temp_df.to_csv(f"{opath}/zz_{agency}", index=False)
+        temp_df.to_csv(f"{opath.directory}/zz_{agency}", index=False)
         # print(temp_df.dtypes)
     elif ".xlsx" in f:
         # Run the same process as above but for Excel files
@@ -139,7 +145,7 @@ for f in CSV_Files_CSV:
         temp_df['Agency'] = temp_df['Agency'].replace('.xlsx', '', regex=True)
         # temp_df.to_csv(f"C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME/Processed_{agency}.csv",
         #               index=False)
-        temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)
+        temp_df.to_csv(f"{opath.directory}/Processed_{agency}.csv", index=False)
         li.append(temp_df)
         # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
         # Now we move on to the actual combination of files into one document
@@ -147,7 +153,7 @@ for f in CSV_Files_CSV:
         temp_df = temp_df[temp_df.columns.intersection(final_columns)]
         liz.append(temp_df)
         # temp_df.to_csv(f"C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME/zz_{agency}.csv", index=False)
-        temp_df.to_csv(f"{opath}/zz_{agency}.csv", index=False)
+        temp_df.to_csv(f"{opath.directory}/zz_{agency}.csv", index=False)
         # print(temp_df.dtypes)
     elif ".xml" in f:
         # Run the same process as above but for XML files
@@ -156,7 +162,7 @@ for f in CSV_Files_CSV:
         temp_df['Agency'] = temp_df['Agency'].replace('.xml', '', regex=True)
         # temp_df.to_csv(f"C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME/Processed_{agency}.csv",
         #                index=False)
-        temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)
+        temp_df.to_csv(f"{opath.directory}/Processed_{agency}.csv", index=False)
         li.append(temp_df)
         print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
         # Now we move on to the actual combination of files into one document
@@ -164,7 +170,7 @@ for f in CSV_Files_CSV:
         temp_df = temp_df[temp_df.columns.intersection(final_columns)]
         liz.append(temp_df)
         # temp_df.to_csv(f"C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME/zz_{agency}.csv", index=False)
-        temp_df.to_csv(f"{opath}/zz_{agency}.csv", index=False)
+        temp_df.to_csv(f"{opath.directory}/zz_{agency}.csv", index=False)
         # print(temp_df.dtypes)
     else:
         # Display a message to indicate the file extension found is not able to be converted at this time
@@ -196,8 +202,8 @@ df2.index = f"{UID}-{now}-" + df2.index
 
 # df.to_csv("C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME/SingleFile.csv")
 # df2.to_csv("C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME/zzSingleFile.csv")
-df.to_csv(f"{opath}/SingleFile.csv")
-df2.to_csv(f"{opath}/zzSingleFile.csv")
+df.to_csv(f"{opath.directory}/SingleFile.csv")
+df2.to_csv(f"{opath.directory}/zzSingleFile.csv")
 
 # print(li)
 # alldfs = [var for var in dir() if isinstance(eval(var), pd.core.frame.DataFrame)]
