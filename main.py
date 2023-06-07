@@ -54,31 +54,6 @@ def main():
     # for file in csv_files_csv:
     #   print(file)
 
-    # Make the system wait for user input to transition to the data processing
-    # input("The system is ready to start. Please press Enter to continue...")
-    # MessageBoxW = ctypes.windll.user32.MessageBoxW
-    # hWnd = None
-    # lpText = "Do you wish to start the program?"
-    # lpCaption = "CFS Start"
-    # uType = 0x40 | 0x1  # MB_ICONINFORMATION | MB_OKCANCEL
-
-    # result = MessageBoxW(hWnd, lpText, lpCaption, uType)
-
-    # if result == 1:  # User selects OK
-    #   QTimer.singleShot(time_milliseconds,
-    #                   lambda: ctypes.windll.user32.MessageBoxW(0, "Starting...", "Initiated", 0).done(0))
-
-    # QTimer.singleShot(time_milliseconds, lambda: CFS_Start_MSG.done(0))
-    # elif result == 2:  # User selected Cancel
-    #   ctypes.windll.user32.MessageBoxW(0, "Quitting...", "Halt", 0)
-    # quit()
-    # else:
-    #   print("??")
-
-    # ctypes.windll.user32.MessageBoxW(0, "The system is ready to start.", "Initiate", 1)
-
-    # result = MessageBoxW()
-
     # The following code creates empty lists to store all the dataframes
     li = []  # This list will be the unaltered dataframes
     liz = []  # This list will be the altered dataframes
@@ -206,7 +181,8 @@ def main():
     # print(temp_df)
     # ctypes.windll.user32.MessageBoxW(0, "The process is complete", "Success", 1)
 
-    print(tabulate(temp_df.head(1), headers='keys', tablefmt='psql'))
+    print('The following is the first 5 rows from the combined data:')
+    print(tabulate(df2.head(5), headers='keys', tablefmt='psql'))
 
     # This is the practice space for the message box that will display the column and first row of the      #
     # Dataframe and allow the user to select which columns to remove                                        #
@@ -241,5 +217,30 @@ def main():
 
     # win.mainloop()
 
+    # Make the system wait for user input to terminate the program
+    input("The process is complete. Please press Enter to quit.")
+    quit()
+    # MessageBoxW = ctypes.windll.user32.MessageBoxW
+    # hWnd = None
+    # lpText = "Do you wish to start the program?"
+    # lpCaption = "CFS Start"
+    # uType = 0x40 | 0x1  # MB_ICONINFORMATION | MB_OKCANCEL
+
+    # result = MessageBoxW(hWnd, lpText, lpCaption, uType)
+
+    # if result == 1:  # User selects OK
+    #   QTimer.singleShot(time_milliseconds,
+    #                   lambda: ctypes.windll.user32.MessageBoxW(0, "Starting...", "Initiated", 0).done(0))
+
+    # QTimer.singleShot(time_milliseconds, lambda: CFS_Start_MSG.done(0))
+    # elif result == 2:  # User selected Cancel
+    #   ctypes.windll.user32.MessageBoxW(0, "Quitting...", "Halt", 0)
+    # quit()
+    # else:
+    #   print("??")
+
+    # ctypes.windll.user32.MessageBoxW(0, "The system is ready to start.", "Initiate", 1)
+
+    # result = MessageBoxW()
 
 main()
