@@ -1,12 +1,10 @@
 # Updated 07JUN2023 10:04
+# Author: Christopher Romeo
 import sys
-
 from IPython.display import display
-
 from tkinter import *
 from tkinter import filedialog
 from tkinter.filedialog import askdirectory
-
 import pandas as pd
 import numpy as np
 import os
@@ -24,32 +22,8 @@ pd.set_option('display.max_colwidth', None)
 
 time_milliseconds = 5000  # Setting the time to be used for auto closing windows (not used at the present)
 
-# The goal is to bring in each individual file and store it as its own dataframe and not as a large dictionary as above
-
-# Set the search path and the glob for the files
-# Tk().withdraw()
-
-# gui_win = Tk()
-# gui_win.geometry('400x200')
-# gui_win.grid_rowconfigure(0, weight=1)
-# gui_win.grid_columnconfigure(0, weight=1)
-#
-#
-#
-# def directory():
-#     ipath = filedialog.askdirectory(initialdir=r"C:/", title='Files Location')
-#     label_path = Label(gui_win, text=ipath, font=('italic 14'))
-#     label_path.pack(pady=20)
-#
-#
-# dialog_btn = Button(gui_win, text='Select Directory', command=directory())
-# dialog_btn.pack()
-# gui_win.mainloop()
-
-# root = Tk()
-# root.directory = filedialog.askdirectory(initialdir="C:/", title="Files Location")
-# print(root.directory)
-
+# Open the file explorer to allow the user to select both the input and output directories
+# ipath is the input directory path and opath is the output directory path
 ipath = Tk()
 ipath.withdraw()
 ipath.directory = filedialog.askdirectory(initialdir="C:/", title="Input Directory for CFS Files")
@@ -60,6 +34,7 @@ opath.withdraw()
 opath.directory = filedialog.askdirectory(initialdir="C:/", title="Output Directory for CFS Translation Results")
 print(opath)
 
+# This pulls all files in the chosen directory
 print("Using glob.glob")
 CSV_Files_CSV = glob.glob(ipath.directory + '/*')
 # Show all the files that were identified
@@ -99,6 +74,7 @@ liz = []  # This list will be the altered dataframes
 # The following code creates a list to store the column names that I want to see at the end
 final_columns = ['agency', 'location', 'priority', 'call type', 'code', 'block address', 'area', 'merged location']
 
+# The goal is to bring in each individual file and store it as its own dataframe and not as a large dictionary as above
 # Now we will loop through the list of files previously scanned, read each one into a dataframe, and append to the list
 for f in CSV_Files_CSV:
     # Get the filename
