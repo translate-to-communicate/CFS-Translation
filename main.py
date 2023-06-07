@@ -180,9 +180,16 @@ def main():
     # alldfs = [var for var in dir() if isinstance(eval(var), pd.core.frame.DataFrame)]
     # print(temp_df)
     # ctypes.windll.user32.MessageBoxW(0, "The process is complete", "Success", 1)
-
+    # print(df2.shape)
+    print('')
+    print('The merged document contains the following columns:')
+    for (columnName) in df2.columns:  # columnName inside a for loop works just as well.
+        print(columnName)
+    print('')
     print('The following is the first 5 rows from the combined data:')
     print(tabulate(df2.head(5), headers='keys', tablefmt='psql'))
+    input("The process is complete. Please press Enter to quit.")
+    quit()
 
     # This is the practice space for the message box that will display the column and first row of the      #
     # Dataframe and allow the user to select which columns to remove                                        #
@@ -218,8 +225,7 @@ def main():
     # win.mainloop()
 
     # Make the system wait for user input to terminate the program
-    input("The process is complete. Please press Enter to quit.")
-    quit()
+
     # MessageBoxW = ctypes.windll.user32.MessageBoxW
     # hWnd = None
     # lpText = "Do you wish to start the program?"
