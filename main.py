@@ -1,6 +1,6 @@
 # Updated 07JUN2023 10:04
 # Author: Christopher Romeo
-# This is the working branch for filenaming using user input
+# This is the working branch for naming the input files using a prompt for the user
 import sys
 from IPython.display import display
 import tkinter as tk
