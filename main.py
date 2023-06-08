@@ -1,10 +1,11 @@
-# Updated 08JUN2023 09:56
+# Updated 08JUN2023 13:25
 # Author: Christopher Romeo
 # This is the working branch for naming the input files using a prompt for the user
 # The script now prompts the user to identify the responsible agency for each file
 import sys
 from IPython.display import display
 import tkinter as tk
+import tkinter.ttk as ttk
 from tkinter import *
 from tkinter.simpledialog import askstring
 from tkinter.messagebox import showinfo
@@ -96,20 +97,22 @@ def main():
         # win.mainloop()
         #
         #
+        # This is the code that was working with the pop-up input boxes                                             #
+        #                                                                                                           #
         win = Tk()
         win.withdraw()  # Hides the tk window
         win.geometry("")  # Allows the window to auto expand based on the following data
         enta = askstring('Agency', f'What is the responsible agency for the file: {agency}?')
         win.destroy()  # Ensures the window is closed for performance purposes
-        # This loop ensures that if the user does not input any information, hits cancel, or the 'x' that the   #
-        # agency information does not change and cause an error. This will default to the file basename.        #
+        # # # This loop ensures that if the user does not input any information, hits cancel, or the 'x' that the   #
+        # # # agency information does not change and cause an error. This will default to the file basename.        #
         if enta is '':
             print(f'No input given for: {agency}')
         elif enta is None:
             print(f"No input given for: {agency}")
         else:
             agency = enta
-        # showinfo('Agency', f'The responsible agency is: {enta}')
+        # # showinfo('Agency', f'The responsible agency is: {enta}')
         # Read in the document
         if ".csv" in f:
             # print("This is a csv file")
@@ -216,12 +219,6 @@ def main():
     # df2.to_csv(f"{opath.directory}/zzSingleFile.csv")  # This is the production code
     df.to_csv(f"{opath}/SingleFile.csv")  # Testing purposes only
     df2.to_csv(f"{opath}/zzSingleFile.csv")  # Testing purposes only
-
-    # print(li)
-    # alldfs = [var for var in dir() if isinstance(eval(var), pd.core.frame.DataFrame)]
-    # print(temp_df)
-    # ctypes.windll.user32.MessageBoxW(0, "The process is complete", "Success", 1)
-    # print(df2.shape)
     print('')
     print('The merged document contains the following columns:')
     for (columnName) in df2.columns:  # columnName inside a for loop works just as well.
@@ -232,63 +229,6 @@ def main():
     print("The process is complete.")
     quit()
 
-    # This is the practice space for the message box that will display the column and first row of the      #
-    # Dataframe and allow the user to select which columns to remove                                        #
-    # Currently, this is just a simple input box to follow the logic                                        #
-    # win = tk.Tk()
-    # win.title('Practice')
-    # win.geometry("")
 
-    #
-    # leb = ttk.Label(win, text='Enter your first name')
-    # leb.grid(row=0, column=0)
-    # leb2 = ttk.Label(win, text='Enter the 2nd details')
-    # leb2.grid(row=1, column=0)
-    #
-    # entb = ttk.Entry(win)
-    # entb.grid(row=0, column=1, columnspan=2)
-    # entb1 = ttk.Entry(win)
-    # entb1.grid(row=1, column=1, columnspan=2)
-    #
-    #
-
-    # entb = temp_df.head(1)
-
-    # def show():
-    #   mbox.showinfo('This is the first row of data', f'{entb}')
-
-    # btn = ttk.Button(win, text='Show', command=show)
-    # btn.grid(row=2, column=1)
-    # Also if you want to destroy your GUI it is better to use 'win.destroy()' instead of 'exit()'
-    # btn1 = ttk.Button(win, text='Exit', command=win.destroy)
-    # btn1.grid(row=2, column=2)
-
-    # win.mainloop()
-
-    # Make the system wait for user input to terminate the program
-
-    # MessageBoxW = ctypes.windll.user32.MessageBoxW
-    # hWnd = None
-    # lpText = "Do you wish to start the program?"
-    # lpCaption = "CFS Start"
-    # uType = 0x40 | 0x1  # MB_ICONINFORMATION | MB_OKCANCEL
-
-    # result = MessageBoxW(hWnd, lpText, lpCaption, uType)
-
-    # if result == 1:  # User selects OK
-    #   QTimer.singleShot(time_milliseconds,
-    #                   lambda: ctypes.windll.user32.MessageBoxW(0, "Starting...", "Initiated", 0).done(0))
-
-    # QTimer.singleShot(time_milliseconds, lambda: CFS_Start_MSG.done(0))
-    # elif result == 2:  # User selected Cancel
-    #   ctypes.windll.user32.MessageBoxW(0, "Quitting...", "Halt", 0)
-    # quit()
-    # else:
-    #   print("??")
-
-    # ctypes.windll.user32.MessageBoxW(0, "The system is ready to start.", "Initiate", 1)
-
-    # result = MessageBoxW()
-
-
-main()
+if __name__ == "__main__":
+    main()
