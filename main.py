@@ -5,6 +5,7 @@
 import sys
 from IPython.display import display
 import tkinter as tk
+from PyQt5 import QtGui, QtCore
 import tkinter.ttk as ttk
 from tkinter import *
 from tkinter.simpledialog import askstring
@@ -21,6 +22,42 @@ import glob
 import ctypes
 from PyQt5.QtCore import QTimer
 from datetime import datetime, date
+
+
+# def get_curr_screen_geometry():
+#     """
+#         Workaround to get the size of the current screen in a multi-screen setup.
+#
+#         Returns:
+#             geometry (str): The standard Tk geometry string.
+#                 [width]x[height]+[left]+[top]
+#         """
+#     root = tk.Tk()
+#     root.update_idletasks()
+#     root.attributes('-fullscreen', True)
+#     root.state('iconic')
+#     geometry = root.winfo_geometry()
+#     root.destroy()
+#     return geometry
+
+# This is the function that determines if the user wants to keep or delete the column
+# It shows the first line of data from that column (can be problematic if there are blanks sporadically)
+# Running a loop before sending the df information to the function may help solve a blank field by running through
+# the rows until a non-null value is found
+def call(col, df):
+    twin = tk.Tk()
+    twin.withdraw()
+    yes_to_keep = col
+    no_to_keep = 'Deleted'
+    example = df
+    result = mbox.askyesno('Column Selection', f"Do you want keep the following column: {col}?"
+                                               f" An example of the data hosted in this column is: {example}")
+    if result:
+        twin.destroy()
+        return yes_to_keep
+    else:
+        twin.destroy()
+        return no_to_keep
 
 
 def main():
@@ -66,6 +103,9 @@ def main():
     # The following code creates a list to store the column names that I want to see at the end
     final_columns = ['agency', 'location', 'priority', 'call type', 'code', 'block address', 'area', 'merged location']
 
+    # Call the screen resolution function
+    # print(get_curr_screen_geometry())
+
     # The goal is to bring in each individual file and store it as its own dataframe and not as a large dictionary
     # Here we loop through the list of files previously scanned, read each one into a dataframe, and append to the list
     for f in csv_files_csv:
@@ -99,14 +139,15 @@ def main():
         #
         # This is the code that was working with the pop-up input boxes                                             #
         #                                                                                                           #
-        win = Tk()
+        win = tk.Tk()
+        # win.geometry(get_curr_screen_geometry())  # Makes a fullscreen window
+        win.geometry("")
         win.withdraw()  # Hides the tk window
-        win.geometry("")  # Allows the window to auto expand based on the following data
         enta = askstring('Agency', f'What is the responsible agency for the file: {agency}?')
         win.destroy()  # Ensures the window is closed for performance purposes
         # # # This loop ensures that if the user does not input any information, hits cancel, or the 'x' that the   #
         # # # agency information does not change and cause an error. This will default to the file basename.        #
-        if enta is '':
+        if enta == '':
             print(f'No input given for: {agency}')
         elif enta is None:
             print(f"No input given for: {agency}")
@@ -138,6 +179,20 @@ def main():
             # for(columnName) in temp_df.columns:  # columnName inside a for loop works just as well.
             #     print(columnName)
             # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
+            #
+            # Here I want to ask the user what columns they wish to keep
+            for col in temp_df:
+                colb = col
+                example = temp_df[col].iloc[0]
+                result = call(colb, example)
+                # print(call(colb, example))
+                print(result)
+                # col_lab = ttk.Label(win_col, text=f'Do you want to keep the following column: {col}?')
+                # col_lab.grid(row=0, column=0)
+                #
+                # col_ent = ttk.Entry(win_col)
+                # col_ent.grid(row=0, column=1, columnspan=2)
+            #
             temp_df.columns = map(str.lower, temp_df.columns)
             # print(temp_df.dtypes)
             # print(temp_df.columns)
@@ -223,6 +278,7 @@ def main():
     print('The merged document contains the following columns:')
     for (columnName) in df2.columns:  # columnName inside a for loop works just as well.
         print(columnName)
+    print('')
     print('')
     print('The following is the first 5 rows from the combined data:')
     print(tabulate(df2.head(5), headers='keys', tablefmt='psql'))
