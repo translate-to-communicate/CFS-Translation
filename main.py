@@ -185,6 +185,11 @@ def main():
                 colb = col
                 example = temp_df[col].iloc[0]
                 result = call(colb, example)
+                if result == 'Deleted':
+                    print(f"Deleting column {col}")
+                    temp_df.drop(col, axis=1, inplace=True)
+                else:
+                    print("User chose to keep the column")
                 # print(call(colb, example))
                 print(result)
                 # col_lab = ttk.Label(win_col, text=f'Do you want to keep the following column: {col}?')
@@ -193,6 +198,7 @@ def main():
                 # col_ent = ttk.Entry(win_col)
                 # col_ent.grid(row=0, column=1, columnspan=2)
             #
+            temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)
             temp_df.columns = map(str.lower, temp_df.columns)
             # print(temp_df.dtypes)
             # print(temp_df.columns)
@@ -218,7 +224,20 @@ def main():
             # temp_df.to_csv(f"{opath.directory}/Processed_{agency}.csv", index=False)  # This is the production code
             temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)  # This is the one for quick testing only
             li.append(temp_df)
+            #
+            for col in temp_df:
+                colb = col
+                example = temp_df[col].iloc[0]
+                result = call(colb, example)
+                if result == 'Deleted':
+                    print(f"Deleting column {col}")
+                    temp_df.drop(col, axis=1, inplace=True)
+                else:
+                    print("User chose to keep the column")
+                # print(call(colb, example))
+                print(result)
             # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
+            temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)
             # Now we move on to the actual combination of files into one document
             temp_df.columns = map(str.lower, temp_df.columns)
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
@@ -234,8 +253,21 @@ def main():
             # temp_df.to_csv(f"{opath.directory}/Processed_{agency}.csv", index=False)  # This is the production code
             temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)  # This is the one for quick testing only
             li.append(temp_df)
-            print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
+            #
+            for col in temp_df:
+                colb = col
+                example = temp_df[col].iloc[0]
+                result = call(colb, example)
+                if result == 'Deleted':
+                    print(f"Deleting column {col}")
+                    temp_df.drop(col, axis=1, inplace=True)
+                else:
+                    print("User chose to keep the column")
+                # print(call(colb, example))
+                print(result)
+            # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
             # Now we move on to the actual combination of files into one document
+            temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)
             temp_df.columns = map(str.lower, temp_df.columns)
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
             liz.append(temp_df)
