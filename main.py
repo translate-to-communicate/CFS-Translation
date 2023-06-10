@@ -60,6 +60,86 @@ def call(col, df):
         return no_to_keep
 
 
+def ask_agency(agency_name):
+    win = tk.Tk()
+    win.geometry("")
+    win.withdraw()
+    agency_initial_name = agency_name
+    enta = askstring('Agency', f'What is the responsible agency for the file: {agency_initial_name}?')
+    win.destroy()
+    if enta == '':
+        print(f'No input given for: {agency_initial_name}')
+        return agency_initial_name
+    elif enta is None:
+        print(f'No input is given for: {agency_initial_name}')
+        return agency_initial_name
+    else:
+        print(f'Name has been changed to: {enta}')
+        return enta
+
+
+def col_edit(df):
+    twin = tk.Tk()
+    twin.withdraw()
+    working_df = df
+
+    for col in working_df:
+        example = working_df[col].iloc[0]
+        no_to_keep = 'Deleted'
+        result = mbox.askyesno('Column Selection', f"Do you want keep the following column: {col}?"
+                                                   f" An example of the data hosted in this column is: {example}")
+        if result:
+            print('User chose to keep the column')
+        else:
+            print(f'Deleting column: {col}')
+            working_df.drop(col, axis=1, inplace=True)
+            print(no_to_keep)
+
+    return working_df
+
+
+class WindowFrame(tk.Tk):
+    def __init__(self):
+        super.__init__()
+        self.geometry("500x400")
+        self.title('Calls for Service Translation')
+        self.resizable(0,0)
+        self.protocol("WM_DELETE_WINDOW", self.exit_window)
+
+    def yes_exit(self):
+        print('Bye')
+        self.destroy()
+
+    def exit_window(self):
+        top = tk.Toplevel(self)
+        top.details_expanded = False
+        top.title("Quit")
+        top.geometry("300x100+{}+{}".format(self.winfo_x(), self.winfo_y()))
+        top.resizable(False, False)
+        top.rowconfigure(0, weight=0)
+        top.rowconfigure(1, weight=1)
+        top.columnconfigure(0, weight=1)
+        top.columnconfigure(1, weight=1)
+        tk.Label(top, image="::tk::icons::question").grid(row=0, column=0, pady=(7, 0), padx=(7, 7), sticky="e")
+        tk.Label(top, text="Are you sure you want to quit?").grid(row=0, column=1, columnspan=2, pady=(7, 7),
+                                                                  sticky="w")
+        ttk.Button(top, text="OK", command=self.yes_exit).grid(row=1, column=1, sticky="e")
+        ttk.Button(top, text="Cancel", command=top.destroy).grid(row=1, column=2, padx=(7, 7), sticky="e")
+
+
+def cfs_canvas(num):
+    end = 2
+    nwin = tk.Tk()
+    nwin.title('Calls for Service Translation')
+    nwin.geometry("400x400")
+    if num == end:
+        nwin.destroy()
+        return 'Window closed'
+    elif num == 0:
+
+        return 'Window opened'
+
+
 def main():
     # The following code was used to enable all the data from a dataframe to be displayed in the run window (PyCharm)
     # The code is a part of the pandas package
@@ -69,6 +149,9 @@ def main():
     pd.set_option('display.max_colwidth', None)
 
     time_milliseconds = 5000  # Setting the time to be used for auto closing windows (not used at the present)
+
+    # window1 = cfs_canvas(1)
+    # print(window1)
 
     # Open the file explorer to allow the user to select both the input and output directories
     # ipath is the input directory path and opath is the output directory path
@@ -113,48 +196,8 @@ def main():
         # print(f)
         agency = os.path.basename(f)
         print(f"Now processing: {agency}")
-
-        # # Generate the user prompt to ensure proper agency information
-        # win = tk.Tk()
-        # win.title('Agency Selection')
-        # win.geometry("")
-        #
-        # leb = ttk.Label(win, text=f'What is the responsible agency for the file: {agency}')
-        # leb.grid(row=0, column=0)
-        #
-        # entb = ttk.Entry(win)
-        # entb.grid(row=0, column=1, columnspan=2)
-        #
-        # def show():
-        #     mbox.showinfo('Agency', f'{entb}')
-        #
-        # btn = ttk.Button(win, text='Show', command=show)
-        # btn.grid(row=1, column=1)
-        # # Also if you want to destroy your GUI it is better to use 'win.destroy()' instead of 'exit()'
-        # btn1 = ttk.Button(win, text='Exit', command=win.destroy)
-        # btn1.grid(row=1, column=2)
-        #
-        # win.mainloop()
-        #
-        #
-        # This is the code that was working with the pop-up input boxes                                             #
-        #                                                                                                           #
-        win = tk.Tk()
-        # win.geometry(get_curr_screen_geometry())  # Makes a fullscreen window
-        win.geometry("")
-        win.withdraw()  # Hides the tk window
-        enta = askstring('Agency', f'What is the responsible agency for the file: {agency}?')
-        win.destroy()  # Ensures the window is closed for performance purposes
-        # # # This loop ensures that if the user does not input any information, hits cancel, or the 'x' that the   #
-        # # # agency information does not change and cause an error. This will default to the file basename.        #
-        if enta == '':
-            print(f'No input given for: {agency}')
-        elif enta is None:
-            print(f"No input given for: {agency}")
-        else:
-            agency = enta
-        # # showinfo('Agency', f'The responsible agency is: {enta}')
-        # Read in the document
+        agency = ask_agency(agency)  # Call the function to ask for user input on the agency name
+        # Read in the document based on format
         if ".csv" in f:
             # print("This is a csv file")
             temp_df = pd.read_csv(f)
@@ -180,28 +223,13 @@ def main():
             #     print(columnName)
             # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
             #
-            # Here I want to ask the user what columns they wish to keep
-            for col in temp_df:
-                colb = col
-                example = temp_df[col].iloc[0]
-                result = call(colb, example)
-                if result == 'Deleted':
-                    print(f"Deleting column {col}")
-                    temp_df.drop(col, axis=1, inplace=True)
-                else:
-                    print("User chose to keep the column")
-                # print(call(colb, example))
-                print(result)
-                # col_lab = ttk.Label(win_col, text=f'Do you want to keep the following column: {col}?')
-                # col_lab.grid(row=0, column=0)
-                #
-                # col_ent = ttk.Entry(win_col)
-                # col_ent.grid(row=0, column=1, columnspan=2)
-            #
+            # Here I want to ask the user what columns they wish to keep using the col_edit function
+            temp_df = col_edit(temp_df)
+            print(temp_df.head(5))
+            # Now we save the modified agency file to its own separate file
             temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)
+            # Now make all columns lowercase to allow easier scrub for key words
             temp_df.columns = map(str.lower, temp_df.columns)
-            # print(temp_df.dtypes)
-            # print(temp_df.columns)
             # This will merge location and block address columns
             if 'location' in temp_df.columns and 'block address' in temp_df.columns:
                 # temp_df.insert(3, 'merged location', (temp_df['block address'] + ' : ' + temp_df['location']))
@@ -224,18 +252,9 @@ def main():
             # temp_df.to_csv(f"{opath.directory}/Processed_{agency}.csv", index=False)  # This is the production code
             temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)  # This is the one for quick testing only
             li.append(temp_df)
-            #
-            for col in temp_df:
-                colb = col
-                example = temp_df[col].iloc[0]
-                result = call(colb, example)
-                if result == 'Deleted':
-                    print(f"Deleting column {col}")
-                    temp_df.drop(col, axis=1, inplace=True)
-                else:
-                    print("User chose to keep the column")
-                # print(call(colb, example))
-                print(result)
+            # Now call the function to ask about each column and return the updated dataframe
+            temp_df = col_edit(temp_df)
+            print(temp_df.head(5))
             # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
             temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)
             # Now we move on to the actual combination of files into one document
@@ -254,17 +273,8 @@ def main():
             temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)  # This is the one for quick testing only
             li.append(temp_df)
             #
-            for col in temp_df:
-                colb = col
-                example = temp_df[col].iloc[0]
-                result = call(colb, example)
-                if result == 'Deleted':
-                    print(f"Deleting column {col}")
-                    temp_df.drop(col, axis=1, inplace=True)
-                else:
-                    print("User chose to keep the column")
-                # print(call(colb, example))
-                print(result)
+            temp_df = col_edit(temp_df)
+            print(temp_df.head(5))
             # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
             # Now we move on to the actual combination of files into one document
             temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)
@@ -315,6 +325,9 @@ def main():
     print('The following is the first 5 rows from the combined data:')
     print(tabulate(df2.head(5), headers='keys', tablefmt='psql'))
     print("The process is complete.")
+    # close_window = cfs_canvas(0)
+    # print(close_window)
+    # WindowFrame().mainloop()
     quit()
 
 
