@@ -65,6 +65,7 @@ def ask_agency(agency_name):
     win.geometry("")
     win.withdraw()
     agency_initial_name = agency_name
+    print(agency_initial_name)
     enta = askstring('Agency', f'What is the responsible agency for the file: {agency_initial_name}?')
     win.destroy()
     if enta == '':
@@ -201,6 +202,7 @@ def main():
         if ".csv" in f:
             # print("This is a csv file")
             temp_df = pd.read_csv(f)
+            agency = agency.replace(".csv", "")
             # Create a new column with the file name for the agency at the leftmost portion of the dataframe
             temp_df.insert(0, 'Agency', agency)
             # data cleaning to remove the .csv
@@ -228,7 +230,7 @@ def main():
             print(temp_df.head(5))
             # Now we save the modified agency file to its own separate file
             temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)
-            # Now make all columns lowercase to allow easier scrub for key words
+            # Now make all columns lowercase to allow easier scrub for keywords
             temp_df.columns = map(str.lower, temp_df.columns)
             # This will merge location and block address columns
             if 'location' in temp_df.columns and 'block address' in temp_df.columns:
@@ -247,6 +249,7 @@ def main():
         elif ".xlsx" in f:
             # Run the same process as above but for Excel files
             temp_df = pd.read_excel(f)
+            agency = agency.replace(".xlsx", "")
             temp_df.insert(0, 'Agency', agency)
             temp_df['Agency'] = temp_df['Agency'].replace('.xlsx', '', regex=True)
             # temp_df.to_csv(f"{opath.directory}/Processed_{agency}.csv", index=False)  # This is the production code
@@ -267,6 +270,7 @@ def main():
         elif ".xml" in f:
             # Run the same process as above but for XML files
             temp_df = pd.read_xml(f)
+            agency = agency.replace(".xml", "")
             temp_df.insert(0, 'Agency', agency)
             temp_df['Agency'] = temp_df['Agency'].replace('.xml', '', regex=True)
             # temp_df.to_csv(f"{opath.directory}/Processed_{agency}.csv", index=False)  # This is the production code
