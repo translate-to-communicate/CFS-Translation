@@ -22,6 +22,10 @@ import glob
 import ctypes
 from PyQt5.QtCore import QTimer
 from datetime import datetime, date
+import re
+
+final_columns = ['agency', 'location', 'priority', 'type', 'code', 'block address', 'date',
+                 'area', 'merged location', 'incident', 'close', 'case']
 
 
 # def get_curr_screen_geometry():
@@ -79,22 +83,39 @@ def ask_agency(agency_name):
         return enta
 
 
+def camel_case_split(identifier):
+    matches = re.finditer('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)', identifier)
+    return [m.group(0) for m in matches]
+
+
 def col_edit(df):
     twin = tk.Tk()
     twin.withdraw()
     working_df = df
 
     for col in working_df:
-        example = working_df[col].iloc[0]
-        no_to_keep = 'Deleted'
-        result = mbox.askyesno('Column Selection', f"Do you want keep the following column: {col}?"
-                                                   f" An example of the data hosted in this column is: {example}")
-        if result:
-            print('User chose to keep the column')
+        ncol = col  # Sets the new column (ncol) variable to the column name from the dataframe
+        ncol = camel_case_split(ncol)  # Splits the column name based on if CamelCase is present (produces a list)
+        ncol = ' '.join(ncol)  # Joins the list back into a single string separated by a space
+        ncol = ncol.lower()  # Lowers the string to allow easy comparison to the 'final_columns' list
+        ncol = ncol.replace('_', ' ')  # Replaces the underscore with a space to allow better comparison
+        print(ncol)  # Displays the final resulting name of the new column for comparison
+        # A loop that searches for any matching words from the new column and the 'final_columns' list
+        if any(word in ncol for word in final_columns):
+            print(f"{col} column is mandatory")
         else:
-            print(f'Deleting column: {col}')
-            working_df.drop(col, axis=1, inplace=True)
-            print(no_to_keep)
+            # Display to the user a message that asks to delete the column and provide an example of data in that column
+            example = working_df[col].iloc[0]
+            no_to_keep = 'Deleted'
+            result = mbox.askyesno('Column Selection', f"Do you want keep the following column: {col}?"
+                                                       f" An example of the data hosted in this column is: {example}")
+            # User choice dictates either keeping or deleting the column
+            if result:
+                print('User chose to keep the column')
+            else:
+                print(f'Deleting column: {col}')
+                working_df.drop(col, axis=1, inplace=True)
+                print(no_to_keep)
 
     return working_df
 
@@ -104,7 +125,7 @@ class WindowFrame(tk.Tk):
         super.__init__()
         self.geometry("500x400")
         self.title('Calls for Service Translation')
-        self.resizable(0,0)
+        self.resizable(0, 0)
         self.protocol("WM_DELETE_WINDOW", self.exit_window)
 
     def yes_exit(self):
@@ -185,7 +206,7 @@ def main():
     liz = []  # This list will be the altered dataframes
 
     # The following code creates a list to store the column names that I want to see at the end
-    final_columns = ['agency', 'location', 'priority', 'call type', 'code', 'block address', 'area', 'merged location']
+    # final_columns = ['agency', 'location', 'priority', 'call type', 'code', 'block address', 'area', 'merged location']
 
     # Call the screen resolution function
     # print(get_curr_screen_geometry())
