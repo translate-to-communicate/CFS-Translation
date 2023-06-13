@@ -6,4 +6,4 @@ June 10
 
 June 13
 - Updated the col_edit function to identify "Mandatory" columns based on the global 'final_columns' list
-- 
+- Added a final message window that will display the first 5 rows of the final document to include the column headers
