@@ -23,8 +23,9 @@ from datetime import datetime, date
 import re
 from sodapy import Socrata
 
-final_columns = ['agency', 'location', 'priority', 'type', 'code', 'block address', 'date', 'latitude', 'longitude',
-                 'area', 'merged location', 'incident', 'close', 'case']
+final_columns = ['agency', 'location', 'priority', 'type', 'code', 'block', 'address', 'date', 'latitude', 'longitude',
+                 'area', 'merged location', 'incident', 'close', 'case', 'map', 'subdivision',
+                 'disposition', 'lat', 'long']
 
 
 # This is the function that determines if the user wants to keep or delete the column

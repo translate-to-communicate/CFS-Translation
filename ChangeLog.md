@@ -12,3 +12,5 @@ June 15
 - Fixed an error that caused the col_edit loop to end if the user chose to keep a column ('break' used instead of 'pass')
 - Added in the API for St. Pete, FL. Successfully pulls data; formatting to follow in future updates.
 - Reset the testing branch to fix security issues
+- Modified the main file name
+- Added additional mandatory columns to the final_columns list: disposition, case, map, subdivision, <br> latitude, longitude, lat, lon.
