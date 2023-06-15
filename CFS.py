@@ -4,9 +4,7 @@
 # Agency specification, column selection, .csv and .xlsx fully functional.
 # API access started, xml testing started (need a proper xml file).
 import sys
-from IPython.display import display
 import tkinter as tk
-from PyQt5 import QtGui, QtCore
 import tkinter.ttk as ttk
 from tkinter import *
 from tkinter.simpledialog import askstring
@@ -21,7 +19,6 @@ import numpy as np
 import os
 import glob
 import ctypes
-from PyQt5.QtCore import QTimer
 from datetime import datetime, date
 import re
 from sodapy import Socrata
@@ -299,7 +296,7 @@ def main():
     print('')
     print('The following is the first 5 rows from the combined data:')
     print(tabulate(df2.head(5), headers='keys', tablefmt='psql'))
-    # final_message(df2)
+    final_message(df2)
     # print("The process is complete.")
     # quit()
 
