@@ -1,8 +1,8 @@
-# Updated 13JUN2023 15:11
-# This push will be consolidated into the master branch
+# Updated 15JUN2023 10:26
 # Author: Christopher Romeo
-# This is the working branch for naming the input files using a prompt for the user
-# The script now prompts the user to identify the responsible agency for each file
+# This is the testing branch
+# Agency specification, column selection, .csv and .xlsx fully functional.
+# API access started, xml testing started (need a proper xml file).
 import sys
 from IPython.display import display
 import tkinter as tk
@@ -24,6 +24,7 @@ import ctypes
 from PyQt5.QtCore import QTimer
 from datetime import datetime, date
 import re
+from sodapy import Socrata
 
 final_columns = ['agency', 'location', 'priority', 'type', 'code', 'block address', 'date',
                  'area', 'merged location', 'incident', 'close', 'case']
@@ -113,7 +114,7 @@ def col_edit(df):
             # User choice dictates either keeping or deleting the column
             if result:
                 # print('User chose to keep the column')
-                break
+                pass
             else:
                 print(f'Deleting column: {col}')
                 working_df.drop(col, axis=1, inplace=True)
@@ -317,9 +318,27 @@ def main():
     print('')
     print('The following is the first 5 rows from the combined data:')
     print(tabulate(df2.head(5), headers='keys', tablefmt='psql'))
-    final_message(df2)
+    # final_message(df2)
     # print("The process is complete.")
     # quit()
+
+    # St. Pete API trial run
+    # API access works and will pull the first 2000 results
+    # Left commented out to reduce the number of API requests during testing
+    # myapptoken = "***"
+    #
+    # client = Socrata("stat.stpete.org",
+    #                  myapptoken,
+    #                  username="******",
+    #                  password="******")
+    # # First 2000 results, returned as JSON from API / converted to Python list of
+    # # dictionaries by sodapy.
+    # results = client.get("2eks-pg5j", limit=2000)
+    #
+    # # Convert to pandas DataFrame
+    # results_df = pd.DataFrame.from_records(results)
+    # print(tabulate(results_df.head(10), headers='keys', tablefmt='psql'))
+    quit()
 
 
 if __name__ == "__main__":
