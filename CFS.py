@@ -23,7 +23,7 @@ from datetime import datetime, date
 import re
 from sodapy import Socrata
 
-final_columns = ['agency', 'location', 'priority', 'type', 'code', 'block address', 'date',
+final_columns = ['agency', 'location', 'priority', 'type', 'code', 'block address', 'date', 'latitude', 'longitude',
                  'area', 'merged location', 'incident', 'close', 'case']
 
 
