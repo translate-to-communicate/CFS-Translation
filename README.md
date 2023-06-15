@@ -8,6 +8,7 @@ Features In Development
 
 Currently Supported File Formats
   - CSV
-  - XML
+  - XML (partially - need proper xml file for full testing)
   - XLSX
 
+API integration started
