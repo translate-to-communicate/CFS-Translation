@@ -25,7 +25,7 @@ from sodapy import Socrata
 
 final_columns = ['agency', 'location', 'priority', 'type', 'code', 'block', 'address', 'date', 'latitude', 'longitude',
                  'area', 'merged location', 'incident', 'close', 'case', 'map', 'subdivision',
-                 'disposition', 'lat', 'long']
+                 'disposition', 'lat', 'long', 'classification']
 
 
 # This is the function that determines if the user wants to keep or delete the column
@@ -105,6 +105,7 @@ def col_edit(df):
     return working_df
 
 
+# Function to present the user with a window to acknowledge completion and provide a small preview of the data generated
 def final_message(df):
     def close():
         root.destroy()
@@ -124,12 +125,6 @@ def final_message(df):
     screen.insert(tk.END, tabulate(final_df.head(5), headers='keys', tablefmt='psql'))
 
     root.mainloop()
-
-    # result = mbox.showinfo("Final File Output Preview", f"The following information has been captured: "
-    #                        + tabulate(final_df.head(5), headers='keys', tablefmt='psql'))
-
-    # if result:
-    #     fin_win.destroy()
 
 
 def main():
