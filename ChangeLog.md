@@ -18,4 +18,4 @@ June 15
 June 16
 - Restructured the file directory
 - Added setup.py, __init__.py
-- 
+- Fixed an error where no file directory chosen would result in the C:/ being chosen by default

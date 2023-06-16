@@ -142,11 +142,25 @@ def main():
     ipath = Tk()
     ipath.withdraw()
     ipath.directory = filedialog.askdirectory(initialdir="C:/", title="Input Directory for CFS Files")
+    while ipath.directory == '':
+        result = mbox.askyesno("File Selection Error", "No file directory chosen. Would you like to try again?")
+        if result:
+            ipath.directory = filedialog.askdirectory(initialdir="C:/", title="Input Directory for CFS Files")
+        else:
+            quit()
+
     print('The chosen input directory is: ' + ipath.directory)
     #
     opath = Tk()
     opath.withdraw()
     opath.directory = filedialog.askdirectory(initialdir="C:/", title="Output Directory for CFS Translation Results")
+    while opath.directory == '':
+        result = mbox.askyesno("File Selection Error", "No file directory chosen. Would you like to try again?")
+        if result:
+            opath.directory = filedialog.askdirectory(initialdir="C:/", title="Output Directory for CFS Files")
+        else:
+            quit()
+
     print('The chosen output directory is: ' + opath.directory)
 
     # ipath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST DATA"
