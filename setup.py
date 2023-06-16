@@ -18,5 +18,6 @@ setup(
         "Programming Language :: Python 3.10",
         "Operating System :: OS Independent",
     ],
+    install_requires=["pandas >= 2.0.2", "tabulate >= 0.9.0", "numpy >= 1.24.3", "sodapy >= 2.2.0"],
     python_requires=">=3.10",
 )
