@@ -14,3 +14,8 @@ June 15
 - Reset the testing branch to fix security issues
 - Modified the main file name
 - Added additional mandatory columns to the final_columns list: disposition, case, map, subdivision, <br> latitude, longitude, lat, lon.
+
+June 16
+- Restructured the file directory
+- Added setup.py, __init__.py
+- 
