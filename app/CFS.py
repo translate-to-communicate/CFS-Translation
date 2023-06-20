@@ -1,15 +1,12 @@
-# Updated 16JUN2023 14:25
+# Updated 20JUN2023 09:50
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
 # API access started, xml testing started (need a proper xml file).
 import sys
 import tkinter as tk
-import tkinter.ttk as ttk
 from tkinter import *
 from tkinter.simpledialog import askstring
-from tkinter.messagebox import showinfo
-from tkinter import ttk
 import tkinter.messagebox as mbox
 from tkinter import filedialog
 from tkinter.filedialog import askdirectory
@@ -21,33 +18,42 @@ import glob
 import ctypes
 from datetime import datetime, date
 import re
-from sodapy import Socrata
+from sodapy import Socrata  # This is for the St. Pete API
 
 final_columns = ['agency', 'location', 'priority', 'type', 'code', 'block', 'address', 'date', 'latitude', 'longitude',
                  'area', 'merged location', 'incident', 'close', 'case', 'map', 'subdivision',
                  'disposition', 'lat', 'long', 'classification']
 
 
-# This is the function that determines if the user wants to keep or delete the column
-# It shows the first line of data from that column (can be problematic if there are blanks sporadically)
-# Running a loop before sending the df information to the function may help solve a blank field by running through
-# the rows until a non-null value is found
-def call(col, df):
-    twin = tk.Tk()
-    twin.withdraw()
-    yes_to_keep = col
-    no_to_keep = 'Deleted'
-    example = df
-    result = mbox.askyesno('Column Selection', f"Do you want keep the following column: {col}?"
-                                               f" An example of the data hosted in this column is: {example}")
-    if result:
-        twin.destroy()
-        return yes_to_keep
-    else:
-        twin.destroy()
-        return no_to_keep
+def input_file_directory():
+    ipath = Tk()
+    ipath.withdraw()
+    ipath.directory = filedialog.askdirectory(initialdir="C:/", title="Input Directory for CFS Files")
+    while ipath.directory == '':
+        result = mbox.askyesno("File Selection Error", "No file directory chosen. Would you like to try again?")
+        if result:
+            ipath.directory = filedialog.askdirectory(initialdir="C:/", title="Input Directory for CFS Files")
+        else:
+            quit()
+    print('The chosen input directory is: ' + ipath.directory)
+    return ipath.directory
 
 
+def output_file_directory():
+    opath = Tk()
+    opath.withdraw()
+    opath.directory = filedialog.askdirectory(initialdir="C:/", title="Output Directory for CFS Translation Results")
+    while opath.directory == '':
+        result = mbox.askyesno("File Selection Error", "No file directory chosen. Would you like to try again?")
+        if result:
+            opath.directory = filedialog.askdirectory(initialdir="C:/", title="Output Directory for CFS Files")
+        else:
+            quit()
+    print('The chosen output directory is: ' + opath.directory)
+    return opath.directory
+
+
+# Function to identify the specific agency for the file being processed. Allows the user to edit the name if needed.
 def ask_agency(agency_name):
     win = tk.Tk()
     win.geometry("")
@@ -67,11 +73,14 @@ def ask_agency(agency_name):
         return enta
 
 
+# Function to split up words that are in CamelCase.
 def camel_case_split(identifier):
     matches = re.finditer('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)', identifier)
     return [m.group(0) for m in matches]
 
 
+# Function to allow the user to select specific columns to keep; ones that are not considered mandatory.
+# It shows the first line of data from that column with information (blank info is skipped) as an example for the user
 def col_edit(df):
     twin = tk.Tk()
     twin.withdraw()
@@ -89,7 +98,12 @@ def col_edit(df):
             print(f"{col} column is mandatory")
         else:
             # Display to the user a message that asks to delete the column and provide an example of data in that column
-            example = working_df[col].iloc[0]
+            i = 0
+            example = working_df[col].iloc[i]
+            while pd.isna(working_df[col].iloc[i]):
+                i += 1
+                example = working_df[col].iloc[i]
+
             # no_to_keep = 'Deleted'
             result = mbox.askyesno('Column Selection', f"Do you want keep the following column: {col}?"
                                                        f" An example of the data hosted in this column is: {example}")
@@ -127,6 +141,7 @@ def final_message(df):
     root.mainloop()
 
 
+# The main function of the system
 def main():
     # The following code was used to enable all the data from a dataframe to be displayed in the run window (PyCharm)
     # The code is a part of the pandas package
@@ -139,37 +154,14 @@ def main():
     # ipath is the input directory path and opath is the output directory path
     # There will be two versions of this directory information to allow for faster testing
 
-    ipath = Tk()
-    ipath.withdraw()
-    ipath.directory = filedialog.askdirectory(initialdir="C:/", title="Input Directory for CFS Files")
-    while ipath.directory == '':
-        result = mbox.askyesno("File Selection Error", "No file directory chosen. Would you like to try again?")
-        if result:
-            ipath.directory = filedialog.askdirectory(initialdir="C:/", title="Input Directory for CFS Files")
-        else:
-            quit()
+    # Call the functions for input and output directory folders
+    # ipath = input_file_directory()
+    # opath = output_file_directory()
+    ipath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST DATA"  # Quick Testing Code Only
+    opath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME"  # Quick Testing Code Only
 
-    print('The chosen input directory is: ' + ipath.directory)
-    #
-    opath = Tk()
-    opath.withdraw()
-    opath.directory = filedialog.askdirectory(initialdir="C:/", title="Output Directory for CFS Translation Results")
-    while opath.directory == '':
-        result = mbox.askyesno("File Selection Error", "No file directory chosen. Would you like to try again?")
-        if result:
-            opath.directory = filedialog.askdirectory(initialdir="C:/", title="Output Directory for CFS Files")
-        else:
-            quit()
-
-    print('The chosen output directory is: ' + opath.directory)
-
-    # ipath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST DATA"
-    # opath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME"
-
-    # This pulls all files in the chosen directory
-    # print("Using glob.glob")
-    csv_files_csv = glob.glob(ipath.directory + '/*')  # This is the production code
-    # csv_files_csv = glob.glob(ipath + '/*')  # This is the quick testing code
+    # Create a glob to hold the files for processing
+    csv_files_csv = glob.glob(ipath + '/*')  # This is the production code
 
     # Show all the files that were identified
     # for file in csv_files_csv:
@@ -201,15 +193,14 @@ def main():
             # Remove any underscores from the column headers
             temp_df = temp_df.rename(columns=lambda name: name.replace('_', ' '))
             # Create a new processed sheet for each agency
-            temp_df.to_csv(f"{opath.directory}/Processed_{agency}.csv", index=False)  # This is the production code
-            # temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)  # This is the one for quick testing only
+            temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)  # This is the production code
             # add it to the list
             li.append(temp_df)
             # Here I want to ask the user what columns they wish to keep using the col_edit function
             temp_df = col_edit(temp_df)
             # print(temp_df.head(5))  # This shows the first 5 rows of each column in the dataframe
             # Now we save the modified agency file to its own separate file
-            temp_df.to_csv(f"{opath.directory}/Agency_Specific_{agency}.csv", index=False)
+            temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)
             # Now make all columns lowercase to allow easier scrub for keywords
             temp_df.columns = map(str.lower, temp_df.columns)
             # This will merge location and block address columns
@@ -223,8 +214,7 @@ def main():
             # Now we move on to the actual combination of files into one document
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
             liz.append(temp_df)
-            temp_df.to_csv(f"{opath.directory}/zz_{agency}.csv", index=False)  # This is the production code
-            # temp_df.to_csv(f"{opath}/zz_{agency}.csv", index=False)  # This is the one for quick testing only
+            temp_df.to_csv(f"{opath}/zz_{agency}.csv", index=False)  # This is the production code
             # print(temp_df.dtypes)
         elif ".xlsx" in f:
             # Run the same process as above but for Excel files
@@ -232,21 +222,18 @@ def main():
             agency = agency.replace(".xlsx", "")
             temp_df.insert(0, 'Agency', agency)
             temp_df['Agency'] = temp_df['Agency'].replace('.xlsx', '', regex=True)
-            temp_df.to_csv(f"{opath.directory}/Processed_{agency}.csv", index=False)  # This is the production code
-            # temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)  # This is the one for quick testing only
+            temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)  # This is the production code
             li.append(temp_df)
             # Now call the function to ask about each column and return the updated dataframe
             temp_df = col_edit(temp_df)
             # print(temp_df.head(5))
             # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
-            # temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)  # This is for quick testing
-            temp_df.to_csv(f"{opath.directory}/Agency_Specific_{agency}.csv", index=False)
+            temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)
             # Now we move on to the actual combination of files into one document
             temp_df.columns = map(str.lower, temp_df.columns)
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
             liz.append(temp_df)
-            temp_df.to_csv(f"{opath.directory}/zz_{agency}.csv", index=False)  # This is the production code
-            # temp_df.to_csv(f"{opath}/zz_{agency}.csv", index=False)  # This is the one for quick testing only
+            temp_df.to_csv(f"{opath}/zz_{agency}.csv", index=False)  # This is the production code
             # print(temp_df.dtypes)
         elif ".xml" in f:
             # Run the same process as above but for XML files
@@ -254,20 +241,18 @@ def main():
             agency = agency.replace(".xml", "")
             temp_df.insert(0, 'Agency', agency)
             temp_df['Agency'] = temp_df['Agency'].replace('.xml', '', regex=True)
-            temp_df.to_csv(f"{opath.directory}/Processed_{agency}.csv", index=False)  # This is the production code
-            # temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)  # This is the one for quick testing only
+            temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)  # This is the production code
             li.append(temp_df)
             #
             temp_df = col_edit(temp_df)
             # print(temp_df.head(5))
             # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
             # Now we move on to the actual combination of files into one document
-            temp_df.to_csv(f"{opath.directory}/Agency_Specific_{agency}.csv", index=False)
+            temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)
             temp_df.columns = map(str.lower, temp_df.columns)
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
             liz.append(temp_df)
-            temp_df.to_csv(f"{opath.directory}/zz_{agency}.csv", index=False)  # This is the production code
-            # temp_df.to_csv(f"{opath}/zz_{agency}.csv", index=False)  # This is the one for quick testing only
+            temp_df.to_csv(f"{opath}/zz_{agency}.csv", index=False)  # This is the production code
             # print(temp_df.dtypes)
         else:
             # Display a message to indicate the file extension found is not able to be converted at this time
@@ -294,10 +279,8 @@ def main():
     # print(df2.index)
     # df.head()
 
-    df.to_csv(f"{opath.directory}/SingleFile.csv")  # This is the production code
-    df2.to_csv(f"{opath.directory}/zzSingleFile.csv")  # This is the production code
-    # df.to_csv(f"{opath}/SingleFile.csv")  # Testing purposes only
-    # df2.to_csv(f"{opath}/zzSingleFile.csv")  # Testing purposes only
+    df.to_csv(f"{opath}/SingleFile.csv")  # This is the production code
+    df2.to_csv(f"{opath}/zzSingleFile.csv")  # This is the production code
     print('')
     print('The merged document contains the following columns:')
     for (columnName) in df2.columns:  # columnName inside a for loop works just as well.

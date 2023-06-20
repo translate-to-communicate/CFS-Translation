@@ -21,3 +21,8 @@ June 16
 - Fixed an error where no file directory chosen would result in the C:/ being chosen by default
 - Added run.py to call the primary function to occur
 - Removed the .idea folder from the repository
+
+June 20
+- Added two functions (input and output directory calls) to reduce code inside the main function. Allows for quicker<br> swapping between test code and production code.
+- Added a loop to the col_edit function to skip empty data and provide a useful example for the user
+- 
