@@ -25,4 +25,6 @@ June 16
 June 20
 - Added two functions (input and output directory calls) to reduce code inside the main function. Allows for quicker<br> swapping between test code and production code.
 - Added a loop to the col_edit function to skip empty data and provide a useful example for the user
-- 
+- Created a function to display the percentage of a column that is empty (not currently used)
+- Adjusted col_edit to add in a statement showing the percentage of the column that is empty (not currently used)
+- Adjusted col_edit to auto-remove columns that contain 'http' or 'https'
