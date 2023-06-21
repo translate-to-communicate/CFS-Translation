@@ -1,4 +1,4 @@
-# Updated 20JUN2023 11:27
+# Updated 21JUN2023 11:11
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
@@ -23,6 +23,7 @@ from sodapy import Socrata  # This is for the St. Pete API
 final_columns = ['agency', 'location', 'priority', 'type', 'code', 'block', 'address', 'date', 'latitude', 'longitude',
                  'area', 'merged location', 'incident', 'close', 'case', 'map', 'subdivision',
                  'disposition', 'lat', 'long', 'classification']
+auto_delete = ['http', 'https', ':@computed']
 
 
 def input_file_directory():
@@ -92,7 +93,6 @@ def col_edit(df):
     twin = tk.Tk()
     twin.withdraw()
     working_df = df
-    auto_delete = ['http', 'https']
 
     for col in working_df:
         ncol = col  # Sets the new column (ncol) variable to the column name from the dataframe
@@ -104,9 +104,6 @@ def col_edit(df):
         # A loop that searches for any matching words from the new column and the 'final_columns' list
         if any(word in ncol for word in final_columns):
             print(f"{col} column is mandatory.")
-        # elif any(word in ncol for word in auto_delete):
-        #     print(f"{col} column has been auto-removed.")
-        #     working_df.drop(col, axis=1, inplace=True)
         else:
             # Display a message that asks to delete the column and provide an example of data in that column
             i = 0
@@ -136,6 +133,41 @@ def col_edit(df):
                     # print(no_to_keep)
 
     return working_df
+
+
+# Function for API calls.
+def api_calls(opath):
+    api_li = []
+    api_liz = []
+    opath = opath
+
+    # Add the API code here. Be sure to add your API user/pass and token.
+
+    # This is the code for the St. Petersburg, FL Police Department.
+    # The API call brings in 16 data fields (id, event_number, event_case_number, type_of_engagement, sub_engagement,
+    # classification, display_address, crime_date, crime_time, latitude, longitude, location, submit_an_anonymous_tip,
+    # neighborhood_name, council_district, and event_subtype_type_of_event).
+    # There is additional data fields that need to be excluded, but have not yet.
+    agency = "St. Pete API"
+    myapptoken = "****"
+    client = Socrata("stat.stpete.org",
+                     myapptoken,
+                     username="****",
+                     password="****")
+    # First 2000 results, returned as JSON from API / converted to Python list of
+    # dictionaries by sodapy.
+    results = client.get("2eks-pg5j", limit=2000)
+    # Convert to pandas DataFrame
+    results_df = pd.DataFrame.from_records(results)
+    results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+    api_li.append(results_df)
+    results_df = col_edit(results_df)
+    results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+    results_df = results_df[results_df.columns.intersection(final_columns)]
+    api_liz.append(results_df)
+    results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
+
+    return api_li, api_liz
 
 
 # Function to present the user with a window to acknowledge completion and provide a small preview of the data generated
@@ -178,6 +210,7 @@ def main():
     # opath = output_file_directory()  # Production Code
     ipath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST DATA"  # Quick Testing Code Only
     opath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME"  # Quick Testing Code Only
+    api_option = False  # Set this to True if API calls are being made
 
     # Create a glob to hold the files for processing
     csv_files_csv = glob.glob(ipath + '/*')
@@ -209,16 +242,15 @@ def main():
             # Remove any underscores from the column headers
             temp_df = temp_df.rename(columns=lambda name: name.replace('_', ' '))
             # Create a new processed sheet for each agency
-            temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)
+            temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
             # add it to the list
             li.append(temp_df)
             # Determine the number of empty cells per column
             # blank_count(temp_df)
             # Here I want to ask the user what columns they wish to keep using the col_edit function
             temp_df = col_edit(temp_df)
-            # print(temp_df.head(5))  # This shows the first 5 rows of each column in the dataframe
             # Now we save the modified agency file to its own separate file
-            temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)
+            temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
             # Now make all columns lowercase to allow easier scrub for keywords
             temp_df.columns = map(str.lower, temp_df.columns)
             # This will merge location and block address columns
@@ -232,7 +264,7 @@ def main():
             # Now we move on to the actual combination of files into one document
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
             liz.append(temp_df)
-            temp_df.to_csv(f"{opath}/zz_{agency}.csv", index=False)
+            temp_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
             # print(temp_df.dtypes)
         elif ".xlsx" in f:
             # Run the same process as above but for Excel files
@@ -240,18 +272,17 @@ def main():
             agency = agency.replace(".xlsx", "")
             temp_df.insert(0, 'Agency', agency)
             temp_df['Agency'] = temp_df['Agency'].replace('.xlsx', '', regex=True)
-            temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)
+            temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
             li.append(temp_df)
             # Now call the function to ask about each column and return the updated dataframe
             temp_df = col_edit(temp_df)
-            # print(temp_df.head(5))
             # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
-            temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)
+            temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
             # Now we move on to the actual combination of files into one document
             temp_df.columns = map(str.lower, temp_df.columns)
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
             liz.append(temp_df)
-            temp_df.to_csv(f"{opath}/zz_{agency}.csv", index=False)
+            temp_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
             # print(temp_df.dtypes)
         elif ".xml" in f:
             # Run the same process as above but for XML files
@@ -259,30 +290,33 @@ def main():
             agency = agency.replace(".xml", "")
             temp_df.insert(0, 'Agency', agency)
             temp_df['Agency'] = temp_df['Agency'].replace('.xml', '', regex=True)
-            temp_df.to_csv(f"{opath}/Processed_{agency}.csv", index=False)
+            temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
             li.append(temp_df)
-            #
             temp_df = col_edit(temp_df)
-            # print(temp_df.head(5))
-            # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
             # Now we move on to the actual combination of files into one document
-            temp_df.to_csv(f"{opath}/Agency_Specific_{agency}.csv", index=False)
+            temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
             temp_df.columns = map(str.lower, temp_df.columns)
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
             liz.append(temp_df)
-            temp_df.to_csv(f"{opath}/zz_{agency}.csv", index=False)
+            temp_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
             # print(temp_df.dtypes)
         else:
             # Display a message to indicate the file extension found is not able to be converted at this time
             ctypes.windll.user32.MessageBoxW(0, f"This file format is not available"
                                                 f" to be converted at this time: {agency}", "Extension Error", 1)
             # print(f"The following file cannot be translated currently: {agency}")
+    # API call
+    if api_option:
+        api_li, api_liz = api_calls(opath)
+        li.append(api_li)
+        liz.append(api_liz)
+    else:
+        print("No API calls")
 
     # Now we will attempt to concatenate our list of dataframes into one
     df = pd.concat(li, axis=0)
     # print(f"The shape of the simple joined dataframe is: {df.shape}")
     # df.head()
-
     # Does above but for the data with the removed columns
     df2 = pd.concat(liz, axis=0)
     df2.reset_index(drop=True, inplace=True)
@@ -309,24 +343,6 @@ def main():
     print(tabulate(df2.head(5), headers='keys', tablefmt='psql'))
     final_message(df2)
     # print("The process is complete.")
-    # quit()
-
-    # St. Pete API trial run
-    # API access works and will pull the first 2000 results
-    # Left commented out to reduce the number of API requests during testing
-    # myapptoken = "***"
-    #
-    # client = Socrata("stat.stpete.org",
-    #                  myapptoken,
-    #                  username="******",
-    #                  password="******")
-    # # First 2000 results, returned as JSON from API / converted to Python list of
-    # # dictionaries by sodapy.
-    # results = client.get("2eks-pg5j", limit=2000)
-    #
-    # # Convert to pandas DataFrame
-    # results_df = pd.DataFrame.from_records(results)
-    # print(tabulate(results_df.head(10), headers='keys', tablefmt='psql'))
     quit()
 
 

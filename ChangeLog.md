@@ -28,3 +28,7 @@ June 20
 - Created a function to display the percentage of a column that is empty (not currently used)
 - Adjusted col_edit to add in a statement showing the percentage of the column that is empty (not currently used)
 - Adjusted col_edit to auto-remove columns that contain 'http' or 'https'
+
+June 21
+- Function for API calls has been added. A variable in the 'main' function, 'api_option', is set to False by default<br> to skip the call.
+- 
