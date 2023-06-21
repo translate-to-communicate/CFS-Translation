@@ -17,6 +17,7 @@ import os
 import glob
 import ctypes
 from datetime import datetime, date
+import easygui as eg
 import re
 from sodapy import Socrata  # This is for the St. Pete API
 
@@ -133,6 +134,20 @@ def col_edit(df):
                     # print(no_to_keep)
 
     return working_df
+
+
+# presents a checkbox that the user can select multiple columns. Limited to only 3 choices which is not useful
+def checkbox(df):
+    working_df = df
+    li = working_df.columns.values.tolist()
+
+    question = "Which columns do you wish to keep?"
+    title = "Column Selection"
+    list_of_options = li
+
+    choice = eg.multchoicebox(question, title, list_of_options, preselect=None)
+
+    print(choice)
 
 
 # Function for API calls.
