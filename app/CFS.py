@@ -4,6 +4,7 @@
 # Agency specification, column selection, .csv and .xlsx fully functional.
 # API access started, xml testing started (need a proper xml file).
 import sys
+import time
 import tkinter as tk
 from tkinter import *
 from tkinter.simpledialog import askstring
@@ -20,11 +21,84 @@ from datetime import datetime, date
 import easygui as eg
 import re
 from sodapy import Socrata  # This is for the St. Pete API
+import geopy
+from geopy.geocoders import Nominatim
+import json
+import requests
+import urllib.parse
 
-final_columns = ['agency', 'location', 'priority', 'type', 'code', 'block', 'address', 'date', 'latitude', 'longitude',
-                 'area', 'merged location', 'incident', 'close', 'case', 'map', 'subdivision',
-                 'disposition', 'lat', 'long', 'classification']
+# with open("Columns.txt", 'r') as f:
+#     columns_file = [line.split(',') for line in f.read().splitlines()]
+
 auto_delete = ['http', 'https', ':@computed']
+
+
+def geocoding(address):
+    geolocator = Nominatim(user_agent="CFS_user_agent")
+    location = address
+    try:
+        time.sleep(1)
+        loc = geolocator.geocode(location)
+        print(loc.latitude)
+        print(loc.longitude)
+    except (AttributeError, KeyError, ValueError):
+        print("No result")
+    # return geolocation.latitude, geolocation.longitude
+
+    # new_address = address
+    # url = 'https://nominatim.openstreetmap.org/search/' + urllib.parse.quote(new_address) + '?format=json'
+    # response = requests.get(url).json()
+    # print(response[0]["lat"])
+    # print(response[0]["lon"])
+
+
+def location_coding(df):
+    working_df = df
+    new_columns = []
+
+    for col in working_df:
+        ncol = col  # Sets the new column (ncol) variable to the column name from the dataframe
+        ncol = camel_case_split(ncol)  # Splits the column name based on if CamelCase is present (produces a list)
+        ncol = ' '.join(ncol)  # Joins the list back into a single string separated by a space
+        ncol = ncol.lower()  # Lowers the string to allow easy comparison to the 'final_columns' list
+        ncol = ncol.replace('_', ' ')  # Replaces the underscore with a space to allow better comparison
+        new_columns.append(ncol)
+
+    working_df.columns = new_columns
+    print(working_df.columns)
+    # By priority, we will conduct geocoding work if necessary
+    if 'latitude' in working_df.columns and 'longitude' in working_df.columns:
+        print("Merging latitude and longitude information.")
+        working_df['Location (Lat/Long)'] = \
+            working_df['latitude'].apply(str) + ', ' + working_df['longitude'].apply(str)
+
+    elif 'lat' in working_df.columns and 'long' in working_df.columns:
+        print("Merging lat/long information.")
+        working_df['Location (Lat/Long)'] = working_df['lat'].apply(str) + ', ' + working_df['long'].apply(str)
+
+    elif 'block address' in working_df.columns and 'city name' in working_df.columns:
+        print("Converting Block Address and City Name to a Lat/Long.")
+        working_df['Merged Block and City'] = working_df['block address'] + ', ' + working_df['city name']
+        print(working_df['Merged Block and City'].iloc[1])
+        # working_df['block address'] = working_df['block address'].apply(lambda row: geocoding(row))
+
+    elif 'city' in working_df.columns and 'state' in working_df.columns:
+        # temp_df.insert(3, 'merged location', (temp_df['block address'] + ' : ' + temp_df['location']))
+        print("Merging city and state information.")
+        working_df['city and state'] = working_df['city'] + ', ' + working_df['state']
+    else:
+        print("No location information available")
+
+    return working_df
+
+
+def column_creation():
+    columns_list = []
+    with open("Columns.txt", "r") as f:
+        for line in f:
+            words = line.strip().split(', ')
+            columns_list.extend(words)
+    return columns_list
 
 
 def input_file_directory():
@@ -90,10 +164,11 @@ def blank_count(df):
 
 # Function to allow the user to select specific columns to keep; ones that are not considered mandatory.
 # It shows the first line of data from that column with information (blank info is skipped) as an example for the user
-def col_edit(df):
+def col_edit(df, final_columns):
     twin = tk.Tk()
     twin.withdraw()
     working_df = df
+    columns_final = final_columns
 
     for col in working_df:
         ncol = col  # Sets the new column (ncol) variable to the column name from the dataframe
@@ -103,8 +178,11 @@ def col_edit(df):
         ncol = ncol.replace('_', ' ')  # Replaces the underscore with a space to allow better comparison
         # print(ncol)  # Displays the final resulting name of the new column for comparison
         # A loop that searches for any matching words from the new column and the 'final_columns' list
-        if any(word in ncol for word in final_columns):
+        if any(word in ncol for word in columns_final):
             print(f"{col} column is mandatory.")
+        elif any(word in ncol for word in auto_delete):
+            print(f"{col} column has been auto-removed")
+            working_df.drop(col, axis=1, inplace=True)
         else:
             # Display a message that asks to delete the column and provide an example of data in that column
             i = 0
@@ -123,7 +201,7 @@ def col_edit(df):
                 # percent_empty = (working_df[col].isna().mean() * 100).round(2)
                 # no_to_keep = 'Deleted'
                 result = mbox.askyesno('Column Selection', f"Do you want keep the following column: {col}? "
-                                                       f"An example of the data in this column is: {example}.")
+                                                           f"An example of the data in this column is: {example}.")
                 # User choice dictates either keeping or deleting the column
                 if result:
                     # print('User chose to keep the column')
@@ -151,10 +229,14 @@ def checkbox(df):
 
 
 # Function for API calls.
-def api_calls(opath):
+def api_calls(opath, final_columns):
+    columns_final = final_columns
     api_li = []
     api_liz = []
     opath = opath
+    usrname = "***"
+    psword = "****"
+    myapptoken = "*****"
 
     # Add the API code here. Be sure to add your API user/pass and token.
 
@@ -164,11 +246,10 @@ def api_calls(opath):
     # neighborhood_name, council_district, and event_subtype_type_of_event).
     # There is additional data fields that need to be excluded, but have not yet.
     agency = "St. Pete API"
-    myapptoken = "****"
     client = Socrata("stat.stpete.org",
                      myapptoken,
-                     username="****",
-                     password="****")
+                     username=usrname,
+                     password=psword)
     # First 2000 results, returned as JSON from API / converted to Python list of
     # dictionaries by sodapy.
     results = client.get("2eks-pg5j", limit=2000)
@@ -176,9 +257,47 @@ def api_calls(opath):
     results_df = pd.DataFrame.from_records(results)
     results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
     api_li.append(results_df)
-    results_df = col_edit(results_df)
+    results_df = col_edit(results_df, columns_final)
     results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-    results_df = results_df[results_df.columns.intersection(final_columns)]
+    results_df = results_df[results_df.columns.intersection(columns_final)]
+    api_liz.append(results_df)
+    results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
+
+    # Montgomery County, MD
+    agency = "MCPD API"
+    client = Socrata("data.montgomerycountymd.gov",
+                     myapptoken,
+                     username=usrname,
+                     password=psword)
+    # First 2000 results, returned as JSON from API / converted to Python list of
+    # dictionaries by sodapy.
+    results = client.get("98cc-bc7d", limit=2000)
+    # Convert to pandas DataFrame
+    results_df = pd.DataFrame.from_records(results)
+    results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+    api_li.append(results_df)
+    results_df = col_edit(results_df, columns_final)
+    results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+    results_df = results_df[results_df.columns.intersection(columns_final)]
+    api_liz.append(results_df)
+    results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
+
+    # New Orleans, LA Police Department
+    agency = "NOPD API"
+    client = Socrata("data.nola.gov",
+                     myapptoken,
+                     username=usrname,
+                     password=psword)
+    # First 2000 results, returned as JSON from API / converted to Python list of
+    # dictionaries by sodapy.
+    results = client.get("nci8-thrr", limit=2000)
+    # Convert to pandas DataFrame
+    results_df = pd.DataFrame.from_records(results)
+    results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+    api_li.append(results_df)
+    results_df = col_edit(results_df, columns_final)
+    results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+    results_df = results_df[results_df.columns.intersection(columns_final)]
     api_liz.append(results_df)
     results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
 
@@ -192,7 +311,7 @@ def final_message(df):
         quit()
 
     root = tk.Tk()
-    root.geometry("1000x600")
+    root.geometry("1500x600")
     root.title("Final Output Preview")
     final_df = df
     root.protocol('WM_DELETE_WINDOW', close)
@@ -216,6 +335,8 @@ def main():
     pd.set_option('display.width', None)
     pd.set_option('display.max_colwidth', None)
 
+    final_columns = column_creation()
+    print(final_columns)
     # Open the file explorer to allow the user to select both the input and output directories
     # ipath is the input directory path and opath is the output directory path
     # There will be two versions of this directory information to allow for faster testing
@@ -260,10 +381,13 @@ def main():
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
             # add it to the list
             li.append(temp_df)
+            # Testing the location coding
+            new_df = location_coding(temp_df)
+            print(new_df.head(10))
             # Determine the number of empty cells per column
             # blank_count(temp_df)
             # Here I want to ask the user what columns they wish to keep using the col_edit function
-            temp_df = col_edit(temp_df)
+            temp_df = col_edit(temp_df, final_columns)
             # Now we save the modified agency file to its own separate file
             temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
             # Now make all columns lowercase to allow easier scrub for keywords
@@ -289,8 +413,11 @@ def main():
             temp_df['Agency'] = temp_df['Agency'].replace('.xlsx', '', regex=True)
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
             li.append(temp_df)
+            # Location service testing
+            new_df = location_coding(temp_df)
+            print(new_df.head(10))
             # Now call the function to ask about each column and return the updated dataframe
-            temp_df = col_edit(temp_df)
+            temp_df = col_edit(temp_df, final_columns)
             # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
             temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
             # Now we move on to the actual combination of files into one document
@@ -307,7 +434,7 @@ def main():
             temp_df['Agency'] = temp_df['Agency'].replace('.xml', '', regex=True)
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
             li.append(temp_df)
-            temp_df = col_edit(temp_df)
+            temp_df = col_edit(temp_df, final_columns)
             # Now we move on to the actual combination of files into one document
             temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
             temp_df.columns = map(str.lower, temp_df.columns)
@@ -322,7 +449,7 @@ def main():
             # print(f"The following file cannot be translated currently: {agency}")
     # API call
     if api_option:
-        api_li, api_liz = api_calls(opath)
+        api_li, api_liz = api_calls(opath, final_columns)
         li.append(api_li)
         liz.append(api_liz)
     else:

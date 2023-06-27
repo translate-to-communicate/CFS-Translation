@@ -31,4 +31,11 @@ June 20
 
 June 21
 - Function for API calls has been added. A variable in the 'main' function, 'api_option', is set to False by default<br> to skip the call.
-- 
+
+June 26
+- Created function to generate the final columns from a text file. Removes the global list and allows updating via <br> a .txt file.
+- Created a location function to manage the location data
+
+June 27
+- Updated location function to merge columns for better processing
+- Geocoding struggles with Nominatim
