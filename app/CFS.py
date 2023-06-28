@@ -34,25 +34,40 @@ auto_delete = ['http', 'https', ':@computed']
 
 
 def geocoding(address):
-    geolocator = Nominatim(user_agent="CFS_user_agent")
+    # time.sleep(2)
+    geolocator = Nominatim(user_agent="CFS_User")
     location = address
-    try:
-        time.sleep(1)
-        loc = geolocator.geocode(location)
-        print(loc.latitude)
-        print(loc.longitude)
-    except (AttributeError, KeyError, ValueError):
-        print("No result")
-    # return geolocation.latitude, geolocation.longitude
+    # print(location)
 
-    # new_address = address
-    # url = 'https://nominatim.openstreetmap.org/search/' + urllib.parse.quote(new_address) + '?format=json'
-    # response = requests.get(url).json()
-    # print(response[0]["lat"])
-    # print(response[0]["lon"])
+    if pd.isna(location):
+        print("No address")
+    else:
+        print(location)
+        # try:
+        #     loc = geolocator.geocode(location, timeout=10)
+        #     print(location, loc.latitude, loc.longitude)
+        # except (AttributeError, KeyError, ValueError):
+        #     print(location)
+        #     print("No result")
+
+    # return
+
+# new_address = address
+# url = 'https://nominatim.openstreetmap.org/search/' + urllib.parse.quote(new_address) + '?format=json'
+# response = requests.get(url).json()
+# print(response[0]["lat"])
+# print(response[0]["lon"])
 
 
 def location_coding(df):
+    dict1 = {}
+    with open("Dictionary.txt") as f:
+        for line in f:
+            key_value = line.rstrip('\n').split(":")
+            if len(key_value) == 2:
+                dict1[key_value[0]] = key_value[1]
+    print(dict1)
+
     working_df = df
     new_columns = []
 
@@ -65,8 +80,18 @@ def location_coding(df):
         new_columns.append(ncol)
 
     working_df.columns = new_columns
-    print(working_df.columns)
-    # By priority, we will conduct geocoding work if necessary
+
+    for col in working_df.columns:
+        ncol = col
+        ncol = ncol.split()
+        if 'city' in ncol:
+            print("There is a city column")
+            working_df = working_df.replace({col: dict1})
+        else:
+            pass
+
+    # By priority, we will conduct geocoding work if necessary. No geocoding is required if Lat/Long information is
+    # already given.
     if 'latitude' in working_df.columns and 'longitude' in working_df.columns:
         print("Merging latitude and longitude information.")
         working_df['Location (Lat/Long)'] = \
@@ -79,8 +104,8 @@ def location_coding(df):
     elif 'block address' in working_df.columns and 'city name' in working_df.columns:
         print("Converting Block Address and City Name to a Lat/Long.")
         working_df['Merged Block and City'] = working_df['block address'] + ', ' + working_df['city name']
-        print(working_df['Merged Block and City'].iloc[1])
-        # working_df['block address'] = working_df['block address'].apply(lambda row: geocoding(row))
+        # print(working_df['Merged Block and City'].iloc[0])
+        working_df['Geocoded Lat/Long'] = working_df['Merged Block and City'].apply(lambda row: geocoding(row))
 
     elif 'city' in working_df.columns and 'state' in working_df.columns:
         # temp_df.insert(3, 'merged location', (temp_df['block address'] + ' : ' + temp_df['location']))
