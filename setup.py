@@ -19,6 +19,6 @@ setup(
         "Operating System :: OS Independent",
     ],
     install_requires=["pandas >= 2.0.2", "tabulate >= 0.9.0", "numpy >= 1.24.3", "sodapy >= 2.2.0",
-                      "easygui >= 0.98.3"],
+                      "easygui >= 0.98.3", "geopy >= 2.3.0"],
     python_requires=">=3.9.0",
 )

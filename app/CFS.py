@@ -1,120 +1,30 @@
-# Updated 21JUN2023 11:11
+# Updated 29JUN2023 09:36
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
 # API access started, xml testing started (need a proper xml file).
-import sys
-import time
 import tkinter as tk
 from tkinter import *
 from tkinter.simpledialog import askstring
 import tkinter.messagebox as mbox
 from tkinter import filedialog
-from tkinter.filedialog import askdirectory
 import pandas as pd
 from tabulate import tabulate
-import numpy as np
 import os
 import glob
 import ctypes
-from datetime import datetime, date
+from datetime import date
 import easygui as eg
 import re
-from sodapy import Socrata  # This is for the St. Pete API
-import geopy
-from geopy.geocoders import Nominatim
-import json
-import requests
-import urllib.parse
+
+import LocationProcessing
+import APIs
 
 # with open("Columns.txt", 'r') as f:
 #     columns_file = [line.split(',') for line in f.read().splitlines()]
 
 auto_delete = ['http', 'https', ':@computed']
-
-
-def geocoding(address):
-    # time.sleep(2)
-    geolocator = Nominatim(user_agent="CFS_User")
-    location = address
-    # print(location)
-
-    if pd.isna(location):
-        print("No address")
-    else:
-        print(location)
-        # try:
-        #     loc = geolocator.geocode(location, timeout=10)
-        #     print(location, loc.latitude, loc.longitude)
-        # except (AttributeError, KeyError, ValueError):
-        #     print(location)
-        #     print("No result")
-
-    # return
-
-# new_address = address
-# url = 'https://nominatim.openstreetmap.org/search/' + urllib.parse.quote(new_address) + '?format=json'
-# response = requests.get(url).json()
-# print(response[0]["lat"])
-# print(response[0]["lon"])
-
-
-def location_coding(df):
-    dict1 = {}
-    with open("Dictionary.txt") as f:
-        for line in f:
-            key_value = line.rstrip('\n').split(":")
-            if len(key_value) == 2:
-                dict1[key_value[0]] = key_value[1]
-    print(dict1)
-
-    working_df = df
-    new_columns = []
-
-    for col in working_df:
-        ncol = col  # Sets the new column (ncol) variable to the column name from the dataframe
-        ncol = camel_case_split(ncol)  # Splits the column name based on if CamelCase is present (produces a list)
-        ncol = ' '.join(ncol)  # Joins the list back into a single string separated by a space
-        ncol = ncol.lower()  # Lowers the string to allow easy comparison to the 'final_columns' list
-        ncol = ncol.replace('_', ' ')  # Replaces the underscore with a space to allow better comparison
-        new_columns.append(ncol)
-
-    working_df.columns = new_columns
-
-    for col in working_df.columns:
-        ncol = col
-        ncol = ncol.split()
-        if 'city' in ncol:
-            print("There is a city column")
-            working_df = working_df.replace({col: dict1})
-        else:
-            pass
-
-    # By priority, we will conduct geocoding work if necessary. No geocoding is required if Lat/Long information is
-    # already given.
-    if 'latitude' in working_df.columns and 'longitude' in working_df.columns:
-        print("Merging latitude and longitude information.")
-        working_df['Location (Lat/Long)'] = \
-            working_df['latitude'].apply(str) + ', ' + working_df['longitude'].apply(str)
-
-    elif 'lat' in working_df.columns and 'long' in working_df.columns:
-        print("Merging lat/long information.")
-        working_df['Location (Lat/Long)'] = working_df['lat'].apply(str) + ', ' + working_df['long'].apply(str)
-
-    elif 'block address' in working_df.columns and 'city name' in working_df.columns:
-        print("Converting Block Address and City Name to a Lat/Long.")
-        working_df['Merged Block and City'] = working_df['block address'] + ', ' + working_df['city name']
-        # print(working_df['Merged Block and City'].iloc[0])
-        working_df['Geocoded Lat/Long'] = working_df['Merged Block and City'].apply(lambda row: geocoding(row))
-
-    elif 'city' in working_df.columns and 'state' in working_df.columns:
-        # temp_df.insert(3, 'merged location', (temp_df['block address'] + ' : ' + temp_df['location']))
-        print("Merging city and state information.")
-        working_df['city and state'] = working_df['city'] + ', ' + working_df['state']
-    else:
-        print("No location information available")
-
-    return working_df
+api_option = True  # Set this to True if API calls are being made
 
 
 def column_creation():
@@ -254,79 +164,79 @@ def checkbox(df):
 
 
 # Function for API calls.
-def api_calls(opath, final_columns):
-    columns_final = final_columns
-    api_li = []
-    api_liz = []
-    opath = opath
-    usrname = "***"
-    psword = "****"
-    myapptoken = "*****"
-
-    # Add the API code here. Be sure to add your API user/pass and token.
-
-    # This is the code for the St. Petersburg, FL Police Department.
-    # The API call brings in 16 data fields (id, event_number, event_case_number, type_of_engagement, sub_engagement,
-    # classification, display_address, crime_date, crime_time, latitude, longitude, location, submit_an_anonymous_tip,
-    # neighborhood_name, council_district, and event_subtype_type_of_event).
-    # There is additional data fields that need to be excluded, but have not yet.
-    agency = "St. Pete API"
-    client = Socrata("stat.stpete.org",
-                     myapptoken,
-                     username=usrname,
-                     password=psword)
-    # First 2000 results, returned as JSON from API / converted to Python list of
-    # dictionaries by sodapy.
-    results = client.get("2eks-pg5j", limit=2000)
-    # Convert to pandas DataFrame
-    results_df = pd.DataFrame.from_records(results)
-    results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
-    api_li.append(results_df)
-    results_df = col_edit(results_df, columns_final)
-    results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-    results_df = results_df[results_df.columns.intersection(columns_final)]
-    api_liz.append(results_df)
-    results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
-
-    # Montgomery County, MD
-    agency = "MCPD API"
-    client = Socrata("data.montgomerycountymd.gov",
-                     myapptoken,
-                     username=usrname,
-                     password=psword)
-    # First 2000 results, returned as JSON from API / converted to Python list of
-    # dictionaries by sodapy.
-    results = client.get("98cc-bc7d", limit=2000)
-    # Convert to pandas DataFrame
-    results_df = pd.DataFrame.from_records(results)
-    results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
-    api_li.append(results_df)
-    results_df = col_edit(results_df, columns_final)
-    results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-    results_df = results_df[results_df.columns.intersection(columns_final)]
-    api_liz.append(results_df)
-    results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
-
-    # New Orleans, LA Police Department
-    agency = "NOPD API"
-    client = Socrata("data.nola.gov",
-                     myapptoken,
-                     username=usrname,
-                     password=psword)
-    # First 2000 results, returned as JSON from API / converted to Python list of
-    # dictionaries by sodapy.
-    results = client.get("nci8-thrr", limit=2000)
-    # Convert to pandas DataFrame
-    results_df = pd.DataFrame.from_records(results)
-    results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
-    api_li.append(results_df)
-    results_df = col_edit(results_df, columns_final)
-    results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-    results_df = results_df[results_df.columns.intersection(columns_final)]
-    api_liz.append(results_df)
-    results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
-
-    return api_li, api_liz
+# def api_calls(opath, final_columns):
+#     columns_final = final_columns
+#     api_li = []
+#     api_liz = []
+#     opath = opath
+#     usrname = "***"
+#     psword = "****"
+#     myapptoken = "*****"
+#
+#     # Add the API code here. Be sure to add your API user/pass and token.
+#
+#     # This is the code for the St. Petersburg, FL Police Department.
+#     # The API call brings in 16 data fields (id, event_number, event_case_number, type_of_engagement, sub_engagement,
+#     # classification, display_address, crime_date, crime_time, latitude, longitude, location, submit_an_anonymous_tip,
+#     # neighborhood_name, council_district, and event_subtype_type_of_event).
+#     # There is additional data fields that need to be excluded, but have not yet.
+#     agency = "St. Pete API"
+#     client = Socrata("stat.stpete.org",
+#                      myapptoken,
+#                      username=usrname,
+#                      password=psword)
+#     # First 2000 results, returned as JSON from API / converted to Python list of
+#     # dictionaries by sodapy.
+#     results = client.get("2eks-pg5j", limit=2000)
+#     # Convert to pandas DataFrame
+#     results_df = pd.DataFrame.from_records(results)
+#     results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+#     api_li.append(results_df)
+#     results_df = col_edit(results_df, columns_final)
+#     results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+#     results_df = results_df[results_df.columns.intersection(columns_final)]
+#     api_liz.append(results_df)
+#     results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
+#
+#     # Montgomery County, MD
+#     agency = "MCPD API"
+#     client = Socrata("data.montgomerycountymd.gov",
+#                      myapptoken,
+#                      username=usrname,
+#                      password=psword)
+#     # First 2000 results, returned as JSON from API / converted to Python list of
+#     # dictionaries by sodapy.
+#     results = client.get("98cc-bc7d", limit=2000)
+#     # Convert to pandas DataFrame
+#     results_df = pd.DataFrame.from_records(results)
+#     results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+#     api_li.append(results_df)
+#     results_df = col_edit(results_df, columns_final)
+#     results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+#     results_df = results_df[results_df.columns.intersection(columns_final)]
+#     api_liz.append(results_df)
+#     results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
+#
+#     # New Orleans, LA Police Department
+#     agency = "NOPD API"
+#     client = Socrata("data.nola.gov",
+#                      myapptoken,
+#                      username=usrname,
+#                      password=psword)
+#     # First 2000 results, returned as JSON from API / converted to Python list of
+#     # dictionaries by sodapy.
+#     results = client.get("nci8-thrr", limit=2000)
+#     # Convert to pandas DataFrame
+#     results_df = pd.DataFrame.from_records(results)
+#     results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+#     api_li.append(results_df)
+#     results_df = col_edit(results_df, columns_final)
+#     results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+#     results_df = results_df[results_df.columns.intersection(columns_final)]
+#     api_liz.append(results_df)
+#     results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
+#
+#     return api_li, api_liz
 
 
 # Function to present the user with a window to acknowledge completion and provide a small preview of the data generated
@@ -371,7 +281,6 @@ def main():
     # opath = output_file_directory()  # Production Code
     ipath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST DATA"  # Quick Testing Code Only
     opath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME"  # Quick Testing Code Only
-    api_option = False  # Set this to True if API calls are being made
 
     # Create a glob to hold the files for processing
     csv_files_csv = glob.glob(ipath + '/*')
@@ -386,6 +295,15 @@ def main():
 
     # The goal is to bring in each individual file and store it as its own dataframe and not as a large dictionary
     # Here we loop through the list of files previously scanned, read each one into a dataframe, and append to the list
+
+    # API call
+    if api_option:
+        api_li, api_liz = APIs.api_calls(opath, final_columns)
+        li.append(api_li)
+        liz.append(api_liz)
+    else:
+        print("No API calls")
+
     for f in csv_files_csv:
         # Get the filename
         agency = os.path.basename(f)
@@ -407,7 +325,7 @@ def main():
             # add it to the list
             li.append(temp_df)
             # Testing the location coding
-            new_df = location_coding(temp_df)
+            new_df = LocationProcessing.location_coding(temp_df)
             print(new_df.head(10))
             # Determine the number of empty cells per column
             # blank_count(temp_df)
@@ -439,7 +357,7 @@ def main():
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
             li.append(temp_df)
             # Location service testing
-            new_df = location_coding(temp_df)
+            new_df = LocationProcessing.location_coding(temp_df)
             print(new_df.head(10))
             # Now call the function to ask about each column and return the updated dataframe
             temp_df = col_edit(temp_df, final_columns)
@@ -472,13 +390,6 @@ def main():
             ctypes.windll.user32.MessageBoxW(0, f"This file format is not available"
                                                 f" to be converted at this time: {agency}", "Extension Error", 1)
             # print(f"The following file cannot be translated currently: {agency}")
-    # API call
-    if api_option:
-        api_li, api_liz = api_calls(opath, final_columns)
-        li.append(api_li)
-        liz.append(api_liz)
-    else:
-        print("No API calls")
 
     # Now we will attempt to concatenate our list of dataframes into one
     df = pd.concat(li, axis=0)

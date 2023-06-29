@@ -43,4 +43,7 @@ June 27
 June 28
 - Added a dictionary to allow for content replacement during location processing. Nominatim struggled due to an <br> inability to locate the address without the proper city (VAB does not exist - it is Virginia Beach).
 - A large issue is the request limit that is placed on the geocoding by the Nominatim Usage Policy. The volume <br> of requests ultimately results in an error "geopy.exc.GeocoderServiceError: Non-successful status code 502".
-- 
+
+June 29
+- Moved the API and location processing to separate files
+- Updated requirements to include geopy
