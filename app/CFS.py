@@ -1,4 +1,4 @@
-# Updated 29JUN2023 09:36
+# Updated 29JUN2023 10:59
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
@@ -24,7 +24,7 @@ import APIs
 #     columns_file = [line.split(',') for line in f.read().splitlines()]
 
 auto_delete = ['http', 'https', ':@computed']
-api_option = True  # Set this to True if API calls are being made
+api_option = False  # Set this to True if API calls are being made
 
 
 def column_creation():
@@ -285,10 +285,6 @@ def main():
     # Create a glob to hold the files for processing
     csv_files_csv = glob.glob(ipath + '/*')
 
-    # Show all the files that were identified
-    # for file in csv_files_csv:
-    #   print(file)
-
     # The following code creates empty lists to store all the dataframes
     li = []  # This list will be the unaltered dataframes
     liz = []  # This list will be the altered dataframes
@@ -393,8 +389,6 @@ def main():
 
     # Now we will attempt to concatenate our list of dataframes into one
     df = pd.concat(li, axis=0)
-    # print(f"The shape of the simple joined dataframe is: {df.shape}")
-    # df.head()
     # Does above but for the data with the removed columns
     df2 = pd.concat(liz, axis=0)
     df2.reset_index(drop=True, inplace=True)
@@ -402,12 +396,9 @@ def main():
     uid = "CR"  # This is the uid for the project
     now = date.today()
 
-    # print(f"The shape of the modified and intersected dataframe is: {df2.shape}")
     df2.index = df2.index.astype(str)
     df2.index.name = 'uid'
     df2.index = f"{uid}-{now}-" + df2.index
-    # print(df2.index)
-    # df.head()
 
     df.to_csv(f"{opath}/SingleFile.csv")
     df2.to_csv(f"{opath}/zzSingleFile.csv")

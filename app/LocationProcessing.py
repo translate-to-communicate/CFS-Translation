@@ -44,11 +44,22 @@ def location_coding(df):
     if 'latitude' in working_df.columns and 'longitude' in working_df.columns:
         print("Merging latitude and longitude information.")
         working_df['Location (Lat/Long)'] = \
-            working_df['latitude'].apply(str) + ', ' + working_df['longitude'].apply(str)
+            working_df['latitude'].apply(str) + ' ' + working_df['longitude'].apply(str)
+        working_df.drop('latitude', axis=1, inplace=True)
+        working_df.drop('longitude', axis=1, inplace=True)
 
     elif 'lat' in working_df.columns and 'long' in working_df.columns:
         print("Merging lat/long information.")
-        working_df['Location (Lat/Long)'] = working_df['lat'].apply(str) + ', ' + working_df['long'].apply(str)
+        working_df['Location (Lat/Long)'] = working_df['lat'].apply(str) + ' ' + working_df['long'].apply(str)
+        working_df.drop('lat', axis=1, inplace=True)
+        working_df.drop('long', axis=1, inplace=True)
+
+    elif 'location' in working_df.columns:
+        print("Working through location information.")
+        working_df['location'] = working_df['location'].replace('\(|\)', '', regex=True)
+        working_df['location'] = working_df['location'].replace('POINT', '', regex=True)
+        working_df['Location (Lat/Long)'] = working_df['location']
+        working_df.drop('location', axis=1, inplace=True)
 
     elif 'block address' in working_df.columns and 'city name' in working_df.columns:
         print("Converting Block Address and City Name to a Lat/Long.")

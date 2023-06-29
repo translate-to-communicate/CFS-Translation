@@ -18,7 +18,6 @@ def api_calls(opath, final_columns):
     # The API call brings in 16 data fields (id, event_number, event_case_number, type_of_engagement, sub_engagement,
     # classification, display_address, crime_date, crime_time, latitude, longitude, location, submit_an_anonymous_tip,
     # neighborhood_name, council_district, and event_subtype_type_of_event).
-    # There is additional data fields that need to be excluded, but have not yet.
     agency = "St. Pete API"
     print(f"Starting {agency}")
     client = Socrata("stat.stpete.org",
