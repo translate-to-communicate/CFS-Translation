@@ -1,4 +1,4 @@
-# Updated 30JUN2023 13:46
+# Updated 03JUL2023 13:36
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
@@ -228,6 +228,10 @@ def main():
             temp_df = temp_df.rename(columns=lambda name: name.replace('_', ' '))
             # Create a new processed sheet for each agency
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+            # Assign the AUID
+            temp_df.index = temp_df.index.astype(str)
+            temp_df.index.name = 'aid'
+            temp_df.index = f"{agency}-" + temp_df.index
             # add it to the list
             li.append(temp_df)
             # Send to LocationProcessing
@@ -261,6 +265,10 @@ def main():
             temp_df.insert(0, 'Agency', agency)
             temp_df['Agency'] = temp_df['Agency'].replace('.xlsx', '', regex=True)
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+            # Assign the AUID
+            temp_df.index = temp_df.index.astype(str)
+            temp_df.index.name = 'aid'
+            temp_df.index = f"{agency}-" + temp_df.index
             li.append(temp_df)
             # Location service testing
             new_df = LocationProcessing.location_coding(temp_df)
@@ -282,6 +290,10 @@ def main():
             temp_df.insert(0, 'Agency', agency)
             temp_df['Agency'] = temp_df['Agency'].replace('.xml', '', regex=True)
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+            # Assign the AUID
+            temp_df.index = temp_df.index.astype(str)
+            temp_df.index.name = 'aid'
+            temp_df.index = f"{agency}-" + temp_df.index
             li.append(temp_df)
             temp_df = col_edit(temp_df, final_columns)
             # Now we move on to the actual combination of files into one document
