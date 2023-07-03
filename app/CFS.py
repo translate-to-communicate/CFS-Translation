@@ -1,4 +1,4 @@
-# Updated 29JUN2023 10:59
+# Updated 30JUN2023 13:46
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
@@ -24,7 +24,6 @@ import APIs
 #     columns_file = [line.split(',') for line in f.read().splitlines()]
 
 auto_delete = ['http', 'https', ':@computed']
-api_option = False  # Set this to True if API calls are being made
 
 
 def column_creation():
@@ -149,96 +148,6 @@ def col_edit(df, final_columns):
     return working_df
 
 
-# presents a checkbox that the user can select multiple columns. Limited to only 3 choices which is not useful
-def checkbox(df):
-    working_df = df
-    li = working_df.columns.values.tolist()
-
-    question = "Which columns do you wish to keep?"
-    title = "Column Selection"
-    list_of_options = li
-
-    choice = eg.multchoicebox(question, title, list_of_options, preselect=None)
-
-    print(choice)
-
-
-# Function for API calls.
-# def api_calls(opath, final_columns):
-#     columns_final = final_columns
-#     api_li = []
-#     api_liz = []
-#     opath = opath
-#     usrname = "***"
-#     psword = "****"
-#     myapptoken = "*****"
-#
-#     # Add the API code here. Be sure to add your API user/pass and token.
-#
-#     # This is the code for the St. Petersburg, FL Police Department.
-#     # The API call brings in 16 data fields (id, event_number, event_case_number, type_of_engagement, sub_engagement,
-#     # classification, display_address, crime_date, crime_time, latitude, longitude, location, submit_an_anonymous_tip,
-#     # neighborhood_name, council_district, and event_subtype_type_of_event).
-#     # There is additional data fields that need to be excluded, but have not yet.
-#     agency = "St. Pete API"
-#     client = Socrata("stat.stpete.org",
-#                      myapptoken,
-#                      username=usrname,
-#                      password=psword)
-#     # First 2000 results, returned as JSON from API / converted to Python list of
-#     # dictionaries by sodapy.
-#     results = client.get("2eks-pg5j", limit=2000)
-#     # Convert to pandas DataFrame
-#     results_df = pd.DataFrame.from_records(results)
-#     results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
-#     api_li.append(results_df)
-#     results_df = col_edit(results_df, columns_final)
-#     results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-#     results_df = results_df[results_df.columns.intersection(columns_final)]
-#     api_liz.append(results_df)
-#     results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
-#
-#     # Montgomery County, MD
-#     agency = "MCPD API"
-#     client = Socrata("data.montgomerycountymd.gov",
-#                      myapptoken,
-#                      username=usrname,
-#                      password=psword)
-#     # First 2000 results, returned as JSON from API / converted to Python list of
-#     # dictionaries by sodapy.
-#     results = client.get("98cc-bc7d", limit=2000)
-#     # Convert to pandas DataFrame
-#     results_df = pd.DataFrame.from_records(results)
-#     results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
-#     api_li.append(results_df)
-#     results_df = col_edit(results_df, columns_final)
-#     results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-#     results_df = results_df[results_df.columns.intersection(columns_final)]
-#     api_liz.append(results_df)
-#     results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
-#
-#     # New Orleans, LA Police Department
-#     agency = "NOPD API"
-#     client = Socrata("data.nola.gov",
-#                      myapptoken,
-#                      username=usrname,
-#                      password=psword)
-#     # First 2000 results, returned as JSON from API / converted to Python list of
-#     # dictionaries by sodapy.
-#     results = client.get("nci8-thrr", limit=2000)
-#     # Convert to pandas DataFrame
-#     results_df = pd.DataFrame.from_records(results)
-#     results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
-#     api_li.append(results_df)
-#     results_df = col_edit(results_df, columns_final)
-#     results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-#     results_df = results_df[results_df.columns.intersection(columns_final)]
-#     api_liz.append(results_df)
-#     results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
-#
-#     return api_li, api_liz
-
-
 # Function to present the user with a window to acknowledge completion and provide a small preview of the data generated
 def final_message(df):
     def close():
@@ -271,7 +180,7 @@ def main():
     pd.set_option('display.max_colwidth', None)
 
     final_columns = column_creation()
-    print(final_columns)
+    # print(final_columns)
     # Open the file explorer to allow the user to select both the input and output directories
     # ipath is the input directory path and opath is the output directory path
     # There will be two versions of this directory information to allow for faster testing
@@ -291,6 +200,7 @@ def main():
 
     # The goal is to bring in each individual file and store it as its own dataframe and not as a large dictionary
     # Here we loop through the list of files previously scanned, read each one into a dataframe, and append to the list
+    api_option = APIs.api_yn()  # Set this to True if API calls are being made
 
     # API call
     if api_option:
@@ -320,9 +230,9 @@ def main():
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
             # add it to the list
             li.append(temp_df)
-            # Testing the location coding
-            new_df = LocationProcessing.location_coding(temp_df)
-            print(new_df.head(10))
+            # Send to LocationProcessing
+            temp_df = LocationProcessing.location_coding(temp_df)
+            print(temp_df.head(5))
             # Determine the number of empty cells per column
             # blank_count(temp_df)
             # Here I want to ask the user what columns they wish to keep using the col_edit function
@@ -331,14 +241,14 @@ def main():
             temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
             # Now make all columns lowercase to allow easier scrub for keywords
             temp_df.columns = map(str.lower, temp_df.columns)
-            # This will merge location and block address columns
-            if 'location' in temp_df.columns and 'block address' in temp_df.columns:
-                # temp_df.insert(3, 'merged location', (temp_df['block address'] + ' : ' + temp_df['location']))
-                print("Location data and block address data exists. Merging...")
-                temp_df['merged location'] = temp_df['block address'] + ' ' + temp_df['location']
-                # print(temp_df['merged location'])
-            else:
-                print('Location data and block address data DO NOT exist. Not merging')
+            # # This will merge location and block address columns
+            # if 'location' in temp_df.columns and 'block address' in temp_df.columns:
+            #     # temp_df.insert(3, 'merged location', (temp_df['block address'] + ' : ' + temp_df['location']))
+            #     print("Location data and block address data exists. Merging...")
+            #     temp_df['merged location'] = temp_df['block address'] + ' ' + temp_df['location']
+            #     # print(temp_df['merged location'])
+            # else:
+            #     print('Location data and block address data DO NOT exist. Not merging')
             # Now we move on to the actual combination of files into one document
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
             liz.append(temp_df)

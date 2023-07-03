@@ -1,2 +1,2 @@
 incident, location, priority, type, code, block address, date, latitude, longitude, area, merged location, agency
-close, case, map, subdivision, disposition, lat, long, classification
+close, case, map, subdivision, disposition, lat, long, classification, location (lat/long),

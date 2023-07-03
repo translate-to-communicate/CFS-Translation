@@ -48,4 +48,11 @@ June 29
 - Moved the API and location processing to separate files
 - Updated requirements to include geopy
 - Updated location script to process various location data by priority / ease of consumption. A lat/long is the <br> desired outcome. However, not all location information currently produces a lat/long. If the agency <br> only provides a block address then the system will not be able to identify its location (even with a zip).
+
+June 30
+- Cleaned up the main file
+- The api_option variable has been moved to the APIs file to allow a singular point of editing for all API needs
+
+July 3
+- Created a new function in LocationProcessing to take the location data provided and convert to the correct <br> lat/long format. Data provided is typically written as "POINT (longitude, latitude)" and needs to be "latitude, longitude"
 - 

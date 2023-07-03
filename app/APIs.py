@@ -3,6 +3,10 @@ import pandas as pd
 from sodapy import Socrata  # This is for the St. Pete API
 
 
+def api_yn():
+    return False
+
+
 def api_calls(opath, final_columns):
     columns_final = final_columns
     api_li = []
@@ -29,8 +33,10 @@ def api_calls(opath, final_columns):
     results = client.get("2eks-pg5j", limit=2000)
     # Convert to pandas DataFrame
     results_df = pd.DataFrame.from_records(results)
+    results_df.insert(0, 'Agency', agency)
     results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
     api_li.append(results_df)
+
     results_df = CFS.col_edit(results_df, columns_final)
     results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
     results_df = results_df[results_df.columns.intersection(columns_final)]

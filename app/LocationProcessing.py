@@ -1,8 +1,27 @@
 from geopy.geocoders import Nominatim
 import time
 import pandas as pd
+import re
 
 import CFS
+
+
+def sort_nums(row):
+    newlocation = row
+    # print(f"Incoming data: {newlocation}")
+    numbers = ''
+
+    if pd.isna(newlocation):
+        print("No data to convert")
+
+    else:
+        newlocation = str(newlocation)
+        # print(newlocation)
+        numbers = [float(s) for s in re.findall(r'-?\d+\.?\d*', newlocation)]
+        numbers.sort(key=lambda x: int(-x))
+        print(f"This is the reorder lat/long info: {numbers}")
+
+    return numbers
 
 
 def location_coding(df):
@@ -43,14 +62,14 @@ def location_coding(df):
     # already given.
     if 'latitude' in working_df.columns and 'longitude' in working_df.columns:
         print("Merging latitude and longitude information.")
-        working_df['Location (Lat/Long)'] = \
+        working_df['location (lat/long)'] = \
             working_df['latitude'].apply(str) + ' ' + working_df['longitude'].apply(str)
         working_df.drop('latitude', axis=1, inplace=True)
         working_df.drop('longitude', axis=1, inplace=True)
 
     elif 'lat' in working_df.columns and 'long' in working_df.columns:
         print("Merging lat/long information.")
-        working_df['Location (Lat/Long)'] = working_df['lat'].apply(str) + ' ' + working_df['long'].apply(str)
+        working_df['location (lat/long)'] = working_df['lat'].apply(str) + ' ' + working_df['long'].apply(str)
         working_df.drop('lat', axis=1, inplace=True)
         working_df.drop('long', axis=1, inplace=True)
 
@@ -58,7 +77,17 @@ def location_coding(df):
         print("Working through location information.")
         working_df['location'] = working_df['location'].replace('\(|\)', '', regex=True)
         working_df['location'] = working_df['location'].replace('POINT', '', regex=True)
-        working_df['Location (Lat/Long)'] = working_df['location']
+        working_df['location (lat/long)'] = working_df['location']
+        # Convert the location data to the correct order (many agencies use long/lat in their format
+        # i = 0
+        # for row in working_df['location (lat/long)']:
+        #     if pd.isna(working_df['location (lat/long)'].iloc[i]):
+        #         i += 1
+        #         pass
+        #     else:
+        #         working_df['location (lat/long)'].iloc[i] = sort_nums(working_df['location (lat/long)'].iloc[i])
+            # This code below works, but not with any empty row
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].apply(lambda row: sort_nums(row))
         working_df.drop('location', axis=1, inplace=True)
 
     elif 'block address' in working_df.columns and 'city name' in working_df.columns:
