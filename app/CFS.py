@@ -219,6 +219,14 @@ def main():
         if ".csv" in f:
             # print("This is a csv file")
             temp_df = pd.read_csv(f)
+            # These statements identify the number of rows in the dataframe as well as the number of unique values in
+            # the first column. The idea being that if they match, the column needs to be maintained as it is unique,
+            # however I don't fully believe that is the case anymore.
+            # print(len(temp_df.index))
+            # num_unique = temp_df.iloc[:, 0].nunique()
+            # print(num_unique)
+            # print(temp_df.iloc[:, 0].head(5))
+            #
             agency = agency.replace(".csv", "")
             # Create a new column with the file name for the agency at the leftmost portion of the dataframe
             temp_df.insert(0, 'Agency', agency)
@@ -228,10 +236,12 @@ def main():
             temp_df = temp_df.rename(columns=lambda name: name.replace('_', ' '))
             # Create a new processed sheet for each agency
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+
             # Assign the AUID
             temp_df.index = temp_df.index.astype(str)
-            temp_df.index.name = 'aid'
+            temp_df.index.name = 'auid'
             temp_df.index = f"{agency}-" + temp_df.index
+
             # add it to the list
             li.append(temp_df)
             # Send to LocationProcessing

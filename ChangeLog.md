@@ -55,4 +55,7 @@ June 30
 
 July 3
 - Created a new function in LocationProcessing to take the location data provided and convert to the correct <br> lat/long format. Data provided is typically written as "POINT (longitude, latitude)" and needs to be "latitude, longitude"
-- Added 3 lines to the main function to assign Agency UIDs based on the Agency information and the index number 
+- Added 3 lines to the main function to assign Agency UIDs based on the Agency information and the index number
+
+July 4
+- Small updates to columns text and to the AUID
