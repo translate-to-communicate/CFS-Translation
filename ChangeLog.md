@@ -59,3 +59,8 @@ July 3
 
 July 4
 - Small updates to columns text and to the AUID
+
+July 5
+- Added Seattle, WA API
+- Fixed issue with AUID getting deleted
+- 

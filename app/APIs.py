@@ -83,4 +83,23 @@ def api_calls(opath, final_columns):
     api_liz.append(results_df)
     results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
 
+    # Seattle, WA PD
+    agency = "Seattle API"
+    print(f"Starting {agency}")
+    client = Socrata("data.seattle.gov",
+                     myapptoken,
+                     username=usrname,
+                     password=psword)
+    # First 2000 results, returned as JSON from API / converted to Python list of
+    # dictionaries by sodapy.
+    results = client.get("33kz-ixgy", limit=2000)
+    # Convert to pandas DataFrame
+    results_df = pd.DataFrame.from_records(results)
+    results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+    api_li.append(results_df)
+    results_df = CFS.col_edit(results_df, columns_final)
+    results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+    results_df = results_df[results_df.columns.intersection(columns_final)]
+    api_liz.append(results_df)
+    results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
     return api_li, api_liz

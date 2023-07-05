@@ -1,4 +1,4 @@
-# Updated 04JUL2023 09:28
+# Updated 05JUL2023 12:15
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
@@ -234,27 +234,32 @@ def main():
             temp_df['Agency'] = temp_df['Agency'].replace('.csv', '', regex=True)
             # Remove any underscores from the column headers
             temp_df = temp_df.rename(columns=lambda name: name.replace('_', ' '))
-            # Create a new processed sheet for each agency
+            # Create a new processed sheet for each agency - NO NEW DATA HAS BEEN ADDED
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
 
-            # Assign the AUID
-            temp_df.index = temp_df.index.astype(str)
-            temp_df.index.name = 'auid'
-            temp_df.index = f"{agency}-" + temp_df.index
+            # Assign the Agency Unique ID (AUID)
+            tindex = temp_df.index.astype(str)
+            auid = f"{agency}-" + tindex
+            temp_df.insert(1, 'auid', auid)
+            print(temp_df.head(5))
 
             # add it to the list
             li.append(temp_df)
             # Send to LocationProcessing
             temp_df = LocationProcessing.location_coding(temp_df)
+            print("After Location:")
             print(temp_df.head(5))
             # Determine the number of empty cells per column
             # blank_count(temp_df)
             # Here I want to ask the user what columns they wish to keep using the col_edit function
+            print(final_columns)
             temp_df = col_edit(temp_df, final_columns)
+            print("After column edits")
+            print(temp_df.head(5))
             # Now we save the modified agency file to its own separate file
             temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
             # Now make all columns lowercase to allow easier scrub for keywords
-            temp_df.columns = map(str.lower, temp_df.columns)
+            # temp_df.columns = map(str.lower, temp_df.columns)
             # # This will merge location and block address columns
             # if 'location' in temp_df.columns and 'block address' in temp_df.columns:
             #     # temp_df.insert(3, 'merged location', (temp_df['block address'] + ' : ' + temp_df['location']))
@@ -265,6 +270,8 @@ def main():
             #     print('Location data and block address data DO NOT exist. Not merging')
             # Now we move on to the actual combination of files into one document
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
+            print("After intersection")
+            print(temp_df.head(5))
             liz.append(temp_df)
             temp_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
             # print(temp_df.dtypes)
@@ -288,7 +295,7 @@ def main():
             # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
             temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
             # Now we move on to the actual combination of files into one document
-            temp_df.columns = map(str.lower, temp_df.columns)
+            # temp_df.columns = map(str.lower, temp_df.columns)
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
             liz.append(temp_df)
             temp_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
@@ -308,7 +315,7 @@ def main():
             temp_df = col_edit(temp_df, final_columns)
             # Now we move on to the actual combination of files into one document
             temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-            temp_df.columns = map(str.lower, temp_df.columns)
+            # temp_df.columns = map(str.lower, temp_df.columns)
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
             liz.append(temp_df)
             temp_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)

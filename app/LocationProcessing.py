@@ -2,6 +2,7 @@ from geopy.geocoders import Nominatim
 import time
 import pandas as pd
 import re
+import itertools
 
 import CFS
 
@@ -22,6 +23,13 @@ def sort_nums(row):
         print(f"This is the reorder lat/long info: {numbers}")
 
     return numbers
+
+
+def search(myDict, lookup):
+    for key, value in myDict.items():
+        for v in value:
+            if lookup in v:
+                return key
 
 
 def location_coding(df):
@@ -45,21 +53,37 @@ def location_coding(df):
         ncol = ' '.join(ncol)  # Joins the list back into a single string separated by a space
         ncol = ncol.lower()  # Lowers the string to allow easy comparison to the 'final_columns' list
         ncol = ncol.replace('_', ' ')  # Replaces the underscore with a space to allow better comparison
+        # Trying to get the column replaced with approved words
+        # print(ncol)
+        # print(any(any(ncol in s for s in subList) for subList in dict1.values()))
+        # print(search(dict1, ncol))
+
+        if 'latitude' in ncol:
+            ncol = 'latitude'
+        elif 'longitude' in ncol:
+            ncol = 'longitude'
+        elif 'city' in ncol:
+            working_df = working_df.replace({col: dict2})
+        #
         new_columns.append(ncol)
 
     working_df.columns = new_columns
 
-    for col in working_df.columns:
-        ncol = col
-        ncol = ncol.split()
-        if 'city' in ncol:
-            print("There is a city column")
-            working_df = working_df.replace({col: dict2})
-        else:
-            pass
+    # Used to update the city name with something Nominatim can recognize
+    # for col in working_df.columns:
+    #     ncol = col
+    #     ncol = ncol.split()
+    #     if 'city' in ncol:
+    #         # print("There is a city column")
+    #         working_df = working_df.replace({col: dict2})
+    #     else:
+    #         pass
+
+    # flat_lc = list(itertools.chain(*location_check))
 
     # By priority, we will conduct geocoding work if necessary. No geocoding is required if Lat/Long information is
     # already given.
+
     if 'latitude' in working_df.columns and 'longitude' in working_df.columns:
         print("Merging latitude and longitude information.")
         working_df['location (lat/long)'] = \

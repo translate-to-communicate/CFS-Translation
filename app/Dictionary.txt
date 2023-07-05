@@ -1,2 +1,4 @@
 Virginia Beach:VAB
 Location:Area_Occ
+Latitude: Latitude, Lat, Blurred Latitude
+Longitude: Longitude, Long, Lon, Blurred Longitude
