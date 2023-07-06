@@ -110,7 +110,7 @@ def location_coding(df):
         #         pass
         #     else:
         #         working_df['location (lat/long)'].iloc[i] = sort_nums(working_df['location (lat/long)'].iloc[i])
-            # This code below works, but not with any empty row
+        # This code below works, but not with any empty row
         working_df['location (lat/long)'] = working_df['location (lat/long)'].apply(lambda row: sort_nums(row))
         working_df.drop('location', axis=1, inplace=True)
 

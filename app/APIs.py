@@ -1,3 +1,4 @@
+import requests
 import CFS
 import pandas as pd
 from sodapy import Socrata  # This is for the St. Pete API
@@ -12,9 +13,9 @@ def api_calls(opath, final_columns):
     api_li = []
     api_liz = []
     opath = opath
-    usrname = "***"
-    psword = "***"
-    myapptoken = "***"
+    usrname = "****"
+    psword = "****"
+    myapptoken = "****"
 
     # Add the API code here. Be sure to add your API user/pass and token.
 
@@ -28,20 +29,25 @@ def api_calls(opath, final_columns):
                      myapptoken,
                      username=usrname,
                      password=psword)
-    # First 2000 results, returned as JSON from API / converted to Python list of
+    # First 100 results, returned as JSON from API / converted to Python list of
     # dictionaries by sodapy.
-    results = client.get("2eks-pg5j", limit=2000)
-    # Convert to pandas DataFrame
-    results_df = pd.DataFrame.from_records(results)
-    results_df.insert(0, 'Agency', agency)
-    results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
-    api_li.append(results_df)
+    try:
+        results = client.get("2eks-pg5j", limit=100)
+        # Convert to pandas DataFrame
+        results_df = pd.DataFrame.from_records(results)
+        results_df.insert(0, 'Agency', agency)
+        results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+        api_li.append(results_df)
 
-    results_df = CFS.col_edit(results_df, columns_final)
-    results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-    results_df = results_df[results_df.columns.intersection(columns_final)]
-    api_liz.append(results_df)
-    results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
+        results_df = CFS.col_edit(results_df, columns_final)
+        results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+        results_df = results_df[results_df.columns.intersection(columns_final)]
+        api_liz.append(results_df)
+        results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
+    except requests.Timeout:
+        print("Connection to St. Pete failed.")
+    except requests.RequestException:
+        print("Unknown Error")
 
     # Montgomery County, MD
     agency = "MCPD API"
@@ -50,18 +56,24 @@ def api_calls(opath, final_columns):
                      myapptoken,
                      username=usrname,
                      password=psword)
-    # First 2000 results, returned as JSON from API / converted to Python list of
+    # First 100 results, returned as JSON from API / converted to Python list of
     # dictionaries by sodapy.
-    results = client.get("98cc-bc7d", limit=2000)
-    # Convert to pandas DataFrame
-    results_df = pd.DataFrame.from_records(results)
-    results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
-    api_li.append(results_df)
-    results_df = CFS.col_edit(results_df, columns_final)
-    results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-    results_df = results_df[results_df.columns.intersection(columns_final)]
-    api_liz.append(results_df)
-    results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
+    try:
+        results = client.get("98cc-bc7d", limit=100)
+        # Convert to pandas DataFrame
+        results_df = pd.DataFrame.from_records(results)
+        results_df.insert(0, 'Agency', agency)
+        results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+        api_li.append(results_df)
+        results_df = CFS.col_edit(results_df, columns_final)
+        results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+        results_df = results_df[results_df.columns.intersection(columns_final)]
+        api_liz.append(results_df)
+        results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
+    except requests.Timeout:
+        print("Connection to MCPD failed.")
+    except requests.RequestException:
+        print("Unknown Error")
 
     # New Orleans, LA Police Department
     agency = "NOPD API"
@@ -70,19 +82,24 @@ def api_calls(opath, final_columns):
                      myapptoken,
                      username=usrname,
                      password=psword)
-    # First 2000 results, returned as JSON from API / converted to Python list of
+    # First 100 results, returned as JSON from API / converted to Python list of
     # dictionaries by sodapy.
-    results = client.get("nci8-thrr", limit=2000)
-    # Convert to pandas DataFrame
-    results_df = pd.DataFrame.from_records(results)
-    results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
-    api_li.append(results_df)
-    results_df = CFS.col_edit(results_df, columns_final)
-    results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-    results_df = results_df[results_df.columns.intersection(columns_final)]
-    api_liz.append(results_df)
-    results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
-
+    try:
+        results = client.get("nci8-thrr", limit=100)
+        # Convert to pandas DataFrame
+        results_df = pd.DataFrame.from_records(results)
+        results_df.insert(0, 'Agency', agency)
+        results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+        api_li.append(results_df)
+        results_df = CFS.col_edit(results_df, columns_final)
+        results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+        results_df = results_df[results_df.columns.intersection(columns_final)]
+        api_liz.append(results_df)
+        results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
+    except requests.Timeout:
+        print("Connection to NOPD failed.")
+    except requests.RequestException:
+        print("Unknown Error")
     # Seattle, WA PD
     agency = "Seattle API"
     print(f"Starting {agency}")
@@ -90,16 +107,23 @@ def api_calls(opath, final_columns):
                      myapptoken,
                      username=usrname,
                      password=psword)
-    # First 2000 results, returned as JSON from API / converted to Python list of
+    # First 100 results, returned as JSON from API / converted to Python list of
     # dictionaries by sodapy.
-    results = client.get("33kz-ixgy", limit=2000)
-    # Convert to pandas DataFrame
-    results_df = pd.DataFrame.from_records(results)
-    results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
-    api_li.append(results_df)
-    results_df = CFS.col_edit(results_df, columns_final)
-    results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-    results_df = results_df[results_df.columns.intersection(columns_final)]
-    api_liz.append(results_df)
-    results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
+    try:
+        results = client.get("33kz-ixgy", limit=100)
+        # Convert to pandas DataFrame
+        results_df = pd.DataFrame.from_records(results)
+        results_df.insert(0, 'Agency', agency)
+        results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+        api_li.append(results_df)
+        results_df = CFS.col_edit(results_df, columns_final)
+        results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+        results_df = results_df[results_df.columns.intersection(columns_final)]
+        api_liz.append(results_df)
+        results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
+    except requests.Timeout:
+        print("Connection to Seattle PD failed.")
+    except requests.RequestException:
+        print("Unknown Error")
+
     return api_li, api_liz

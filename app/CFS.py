@@ -1,4 +1,4 @@
-# Updated 05JUL2023 12:15
+# Updated 06JUL2023 10:56
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
@@ -188,7 +188,7 @@ def main():
     # Call the functions for input and output directory folders
     # ipath = input_file_directory()  # Production Code
     # opath = output_file_directory()  # Production Code
-    ipath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST DATA"  # Quick Testing Code Only
+    ipath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST DATA LITE"  # Quick Testing Code Only
     opath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME"  # Quick Testing Code Only
 
     # Create a glob to hold the files for processing
@@ -204,11 +204,11 @@ def main():
 
     # API call
     if api_option:
-        api_li, api_liz = APIs.api_calls(opath, final_columns)
-        li.append(api_li)
-        liz.append(api_liz)
+        li, liz = APIs.api_calls(opath, final_columns)
     else:
         print("No API calls")
+
+    print(li)
 
     for f in csv_files_csv:
         # Get the filename
@@ -240,7 +240,7 @@ def main():
             # Assign the Agency Unique ID (AUID)
             tindex = temp_df.index.astype(str)
             auid = f"{agency}-" + tindex
-            temp_df.insert(1, 'auid', auid)
+            temp_df.insert(0, 'auid', auid)
             print(temp_df.head(5))
 
             # add it to the list
@@ -282,10 +282,12 @@ def main():
             temp_df.insert(0, 'Agency', agency)
             temp_df['Agency'] = temp_df['Agency'].replace('.xlsx', '', regex=True)
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
-            # Assign the AUID
-            temp_df.index = temp_df.index.astype(str)
-            temp_df.index.name = 'aid'
-            temp_df.index = f"{agency}-" + temp_df.index
+            # Assign the Agency Unique ID (AUID)
+            tindex = temp_df.index.astype(str)
+            auid = f"{agency}-" + tindex
+            temp_df.insert(0, 'auid', auid)
+            print(temp_df.head(5))
+            #
             li.append(temp_df)
             # Location service testing
             new_df = LocationProcessing.location_coding(temp_df)
@@ -307,10 +309,12 @@ def main():
             temp_df.insert(0, 'Agency', agency)
             temp_df['Agency'] = temp_df['Agency'].replace('.xml', '', regex=True)
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
-            # Assign the AUID
-            temp_df.index = temp_df.index.astype(str)
-            temp_df.index.name = 'aid'
-            temp_df.index = f"{agency}-" + temp_df.index
+            # Assign the Agency Unique ID (AUID)
+            tindex = temp_df.index.astype(str)
+            auid = f"{agency}-" + tindex
+            temp_df.insert(0, 'auid', auid)
+            print(temp_df.head(5))
+            #
             li.append(temp_df)
             temp_df = col_edit(temp_df, final_columns)
             # Now we move on to the actual combination of files into one document
@@ -325,12 +329,21 @@ def main():
             ctypes.windll.user32.MessageBoxW(0, f"This file format is not available"
                                                 f" to be converted at this time: {agency}", "Extension Error", 1)
             # print(f"The following file cannot be translated currently: {agency}")
-
+    print("Now we start the final process - concat")
+    print(li)
     # Now we will attempt to concatenate our list of dataframes into one
-    df = pd.concat(li, axis=0)
+    df = pd.concat(li, axis=0, ignore_index=True)
     # Does above but for the data with the removed columns
-    df2 = pd.concat(liz, axis=0)
+    df2 = pd.concat(liz, axis=0, ignore_index=True)
     df2.reset_index(drop=True, inplace=True)
+
+    # Trying to get teh final columns to include anything that has the word
+    for col in df.columns:
+        new_col = col
+        if any(word in new_col for word in final_columns):
+            print(f"This column will remain: {new_col}")
+        else:
+            df.drop(col, axis=1, inplace=True)
 
     uid = "CR"  # This is the uid for the project
     now = date.today()

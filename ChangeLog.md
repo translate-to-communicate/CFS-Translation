@@ -63,4 +63,10 @@ July 4
 July 5
 - Added Seattle, WA API
 - Fixed issue with AUID getting deleted
-- 
+
+July 6
+- Modified the dataframe (df) to keep columns that have words that match the final columns list (the intersection <br> does only full strings and not individual words)
+- Fixed API integration. The separate API script returned a list which caused the list to become a list of lists <br> which the system could not concat
+- Modified the API calls to include Timeout error handling.
+- Modified the dictionary and created a separate agency specific reference that will be used in future work
+- Updated setup to include additional requirements
