@@ -1,4 +1,4 @@
-# Updated 06JUL2023 10:56
+# Updated 06JUL2023 20:10
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
@@ -9,6 +9,7 @@ from tkinter.simpledialog import askstring
 import tkinter.messagebox as mbox
 from tkinter import filedialog
 import pandas as pd
+from pandas import ExcelFile
 from tabulate import tabulate
 import os
 import glob
@@ -33,6 +34,38 @@ def column_creation():
             words = line.strip().split(', ')
             columns_list.extend(words)
     return columns_list
+
+
+def agency_reference():
+    xls = ExcelFile("C:/Users/chris/Desktop/School Assignments/Summer/Agency Reference.xlsx")
+    df_dict = xls.parse(xls.sheet_names[0])
+    return df_dict
+
+
+def remove_empty_values(dictionary):
+    cleaned_dict = {}
+    for key, values in dictionary.items():
+        cleaned_values = [value for value in values if value and not pd.isna(value)]
+        if cleaned_values:
+            cleaned_dict[key] = cleaned_values
+    return cleaned_dict
+
+
+def replace_column_headers(dataframe, dictionary):
+    # Create a copy of the DataFrame to avoid modifying the original
+    df = dataframe.copy()
+
+    new_columns = []
+    for column in df.columns:
+        for key, values in dictionary.items():
+            if column in values:
+                new_columns.append(key)
+                break
+        else:
+            new_columns.append(column)
+    df.columns = new_columns
+
+    return df
 
 
 def input_file_directory():
@@ -208,7 +241,17 @@ def main():
     else:
         print("No API calls")
 
-    print(li)
+    # Create the agency reference dictionary
+    agency_ref = agency_reference()
+    agency_dict = agency_ref.to_dict(orient='records')
+    # Make one large dictionary
+    big_agency_dict = {}
+    for k in agency_dict[0]:
+        big_agency_dict[k] = [d[k] for d in agency_dict]
+    # print("This is the big dictionary")
+    # Clean the dictionary - remove any null values
+    clean_agency_dict = remove_empty_values(big_agency_dict)
+    print(clean_agency_dict)
 
     for f in csv_files_csv:
         # Get the filename
@@ -219,14 +262,10 @@ def main():
         if ".csv" in f:
             # print("This is a csv file")
             temp_df = pd.read_csv(f)
-            # These statements identify the number of rows in the dataframe as well as the number of unique values in
-            # the first column. The idea being that if they match, the column needs to be maintained as it is unique,
-            # however I don't fully believe that is the case anymore.
-            # print(len(temp_df.index))
-            # num_unique = temp_df.iloc[:, 0].nunique()
-            # print(num_unique)
-            # print(temp_df.iloc[:, 0].head(5))
-            #
+            # Create a new processed sheet for each agency - NO NEW DATA HAS BEEN ADDED
+            temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+            # Clean the data before injecting new content
+
             agency = agency.replace(".csv", "")
             # Create a new column with the file name for the agency at the leftmost portion of the dataframe
             temp_df.insert(0, 'Agency', agency)
@@ -234,8 +273,7 @@ def main():
             temp_df['Agency'] = temp_df['Agency'].replace('.csv', '', regex=True)
             # Remove any underscores from the column headers
             temp_df = temp_df.rename(columns=lambda name: name.replace('_', ' '))
-            # Create a new processed sheet for each agency - NO NEW DATA HAS BEEN ADDED
-            temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+
 
             # Assign the Agency Unique ID (AUID)
             tindex = temp_df.index.astype(str)

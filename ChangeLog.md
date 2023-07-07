@@ -68,5 +68,11 @@ July 6
 - Modified the dataframe (df) to keep columns that have words that match the final columns list (the intersection <br> does only full strings and not individual words)
 - Fixed API integration. The separate API script returned a list which caused the list to become a list of lists <br> which the system could not concat
 - Modified the API calls to include Timeout error handling.
-- Modified the dictionary and created a separate agency specific reference that will be used in future work
+- Modified the dictionary and created a separate agency specific reference that will be used in future work**
 - Updated setup to include additional requirements
+- Created a dataframe that will be used for agency specific references - might work better than the dictionary. The <br> user will only need to update the fields as they pertain to the new agencies.
+- Created a dictionary that is generated based on an external xlsx file.
+- Functions created that: create a dictionary based on an external xlsx file, remove empty values from the <br> dictionary, and rename the headers of the dataframe based on that dictionary.
+
+July 7
+
