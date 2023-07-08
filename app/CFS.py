@@ -1,4 +1,4 @@
-# Updated 06JUL2023 20:10
+# Updated 07JUL2023 21:02
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
@@ -21,9 +21,6 @@ import re
 import LocationProcessing
 import APIs
 
-# with open("Columns.txt", 'r') as f:
-#     columns_file = [line.split(',') for line in f.read().splitlines()]
-
 auto_delete = ['http', 'https', ':@computed']
 
 
@@ -38,7 +35,7 @@ def column_creation():
 
 def agency_reference():
     xls = ExcelFile("C:/Users/chris/Desktop/School Assignments/Summer/Agency Reference.xlsx")
-    df_dict = xls.parse(xls.sheet_names[0])
+    df_dict = xls.parse(xls.sheet_names[0], index_col=0)
     return df_dict
 
 
@@ -66,6 +63,33 @@ def replace_column_headers(dataframe, dictionary):
     df.columns = new_columns
 
     return df
+
+
+def replace_column_names(df_a, df_b, row_index):
+    # Make a copy of the dataframe to not mess with the original
+    temp_df = df_a.copy()
+    # Get the values from the correct agency row DataFrame B (agency reference)
+    try:
+        column_name_check = df_b.loc[row_index].values
+        # Create a list to map column names from DataFrame A to DataFrame B
+        new_columns = []
+        # Iterate over columns in DataFrame A
+        for col in temp_df:
+            # Check if the column name is present in the desired column names from DataFrame B
+            if col in column_name_check:
+                # Get the index of the column name in column_names
+                index = list(column_name_check).index(col)
+                new_columns.append(df_b.columns[index])
+            else:
+                # If the column name is not present in column_names, keep the original column name
+                new_columns.append(col)
+
+        # Rename columns in DataFrame A using the new columns list
+        temp_df.columns = new_columns
+    except KeyError:
+        print("That agency is not listed in the reference")
+
+    return temp_df
 
 
 def input_file_directory():
@@ -213,6 +237,9 @@ def main():
     pd.set_option('display.max_colwidth', None)
 
     final_columns = column_creation()
+    # Creates the Agency Reference Dataframe
+    agency_ref = agency_reference()
+
     # print(final_columns)
     # Open the file explorer to allow the user to select both the input and output directories
     # ipath is the input directory path and opath is the output directory path
@@ -221,7 +248,7 @@ def main():
     # Call the functions for input and output directory folders
     # ipath = input_file_directory()  # Production Code
     # opath = output_file_directory()  # Production Code
-    ipath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST DATA LITE"  # Quick Testing Code Only
+    ipath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST DATA"  # Quick Testing Code Only
     opath = "C:/Users/chris/Desktop/School Assignments/Summer/TEST OUTCOME"  # Quick Testing Code Only
 
     # Create a glob to hold the files for processing
@@ -241,124 +268,167 @@ def main():
     else:
         print("No API calls")
 
-    # Create the agency reference dictionary
-    agency_ref = agency_reference()
-    agency_dict = agency_ref.to_dict(orient='records')
-    # Make one large dictionary
-    big_agency_dict = {}
-    for k in agency_dict[0]:
-        big_agency_dict[k] = [d[k] for d in agency_dict]
-    # print("This is the big dictionary")
-    # Clean the dictionary - remove any null values
-    clean_agency_dict = remove_empty_values(big_agency_dict)
-    print(clean_agency_dict)
+    # Here I am attempting to make a list of the agency names based on the file
+    file_dct = {}
+    for f in csv_files_csv:
+        agency_name = os.path.basename(f)
+        head, sep, tail = agency_name.partition('_')
+        file_dct[agency_name] = head
+        print(head)
+        print(agency_name)
+
+    print(file_dct)
 
     for f in csv_files_csv:
         # Get the filename
         agency = os.path.basename(f)
         print(f"Now processing: {agency}")
-        agency = ask_agency(agency)  # Call the function to ask for user input on the agency name
+
+        if agency in file_dct:
+            agency = file_dct[agency]
+        else:
+            agency = ask_agency(agency)  # Call the function to ask for user input on the agency name
+
         # Read in the document based on format
         if ".csv" in f:
-            # print("This is a csv file")
+            agency = agency.replace(".csv", "")
             temp_df = pd.read_csv(f)
-            # Create a new processed sheet for each agency - NO NEW DATA HAS BEEN ADDED
+            # Create a new processed sheet for each agency - NO NEW DATA HAS BEEN ADDED AND NO FORMATTING HAS BEEN DONE
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
             # Clean the data before injecting new content
+            # HERE WE WANT TO RUN THE AGENCY REFERENCE DF AGAINST THE NEW SHEET
+            temp_df = replace_column_names(temp_df, agency_ref, agency)
+            print(tabulate(temp_df.head(5), headers='keys', tablefmt='psql'))
 
-            agency = agency.replace(".csv", "")
+            # HERE WE ADD THE AGENCY COLUMN
             # Create a new column with the file name for the agency at the leftmost portion of the dataframe
             temp_df.insert(0, 'Agency', agency)
             # data cleaning to remove the .csv
             temp_df['Agency'] = temp_df['Agency'].replace('.csv', '', regex=True)
+
             # Remove any underscores from the column headers
             temp_df = temp_df.rename(columns=lambda name: name.replace('_', ' '))
-
 
             # Assign the Agency Unique ID (AUID)
             tindex = temp_df.index.astype(str)
             auid = f"{agency}-" + tindex
             temp_df.insert(0, 'auid', auid)
-            print(temp_df.head(5))
 
-            # add it to the list
+            # add it to the updated dataframe to list
             li.append(temp_df)
             # Send to LocationProcessing
             temp_df = LocationProcessing.location_coding(temp_df)
             print("After Location:")
             print(temp_df.head(5))
-            # Determine the number of empty cells per column
-            # blank_count(temp_df)
+
             # Here I want to ask the user what columns they wish to keep using the col_edit function
-            print(final_columns)
+            # print(final_columns)
             temp_df = col_edit(temp_df, final_columns)
             print("After column edits")
             print(temp_df.head(5))
             # Now we save the modified agency file to its own separate file
             temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-            # Now make all columns lowercase to allow easier scrub for keywords
-            # temp_df.columns = map(str.lower, temp_df.columns)
-            # # This will merge location and block address columns
-            # if 'location' in temp_df.columns and 'block address' in temp_df.columns:
-            #     # temp_df.insert(3, 'merged location', (temp_df['block address'] + ' : ' + temp_df['location']))
-            #     print("Location data and block address data exists. Merging...")
-            #     temp_df['merged location'] = temp_df['block address'] + ' ' + temp_df['location']
-            #     # print(temp_df['merged location'])
-            # else:
-            #     print('Location data and block address data DO NOT exist. Not merging')
-            # Now we move on to the actual combination of files into one document
+
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
             print("After intersection")
             print(temp_df.head(5))
+
+            # Add to the intersected list
             liz.append(temp_df)
             temp_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
             # print(temp_df.dtypes)
         elif ".xlsx" in f:
-            # Run the same process as above but for Excel files
-            temp_df = pd.read_excel(f)
             agency = agency.replace(".xlsx", "")
-            temp_df.insert(0, 'Agency', agency)
-            temp_df['Agency'] = temp_df['Agency'].replace('.xlsx', '', regex=True)
+            temp_df = pd.read_excel(f)
+            # Create a new processed sheet for each agency - NO NEW DATA HAS BEEN ADDED AND NO FORMATTING HAS BEEN DONE
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+            # Clean the data before injecting new content
+            # HERE WE WANT TO RUN THE AGENCY REFERENCE DF AGAINST THE NEW SHEET
+            temp_df = replace_column_names(temp_df, agency_ref, agency)
+            print(tabulate(temp_df.head(5), headers='keys', tablefmt='psql'))
+
+            # HERE WE ADD THE AGENCY COLUMN
+            # Create a new column with the file name for the agency at the leftmost portion of the dataframe
+            temp_df.insert(0, 'Agency', agency)
+            # data cleaning to remove the .xlsx
+            temp_df['Agency'] = temp_df['Agency'].replace('.xlsx', '', regex=True)
+
+            # Remove any underscores from the column headers
+            temp_df = temp_df.rename(columns=lambda name: name.replace('_', ' '))
+
             # Assign the Agency Unique ID (AUID)
             tindex = temp_df.index.astype(str)
             auid = f"{agency}-" + tindex
             temp_df.insert(0, 'auid', auid)
-            print(temp_df.head(5))
-            #
+
+            # add it to the update dataframe list
             li.append(temp_df)
-            # Location service testing
-            new_df = LocationProcessing.location_coding(temp_df)
-            print(new_df.head(10))
+
+            # Send to location service testing
+            temp_df = LocationProcessing.location_coding(temp_df)
+            print(temp_df.head(5))
+
             # Now call the function to ask about each column and return the updated dataframe
             temp_df = col_edit(temp_df, final_columns)
-            # print(f'Successfully created dataframe for {agency} with shape {temp_df.shape}')
+            print("After column edits")
+            print(temp_df.head(5))
+
+            # Save the modified agency file
             temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+
             # Now we move on to the actual combination of files into one document
-            # temp_df.columns = map(str.lower, temp_df.columns)
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
+            print("After intersection")
+            print(temp_df.head(5))
+
+            # Add to the intersected list
             liz.append(temp_df)
             temp_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
             # print(temp_df.dtypes)
         elif ".xml" in f:
-            # Run the same process as above but for XML files
-            temp_df = pd.read_xml(f)
             agency = agency.replace(".xml", "")
-            temp_df.insert(0, 'Agency', agency)
-            temp_df['Agency'] = temp_df['Agency'].replace('.xml', '', regex=True)
+            temp_df = pd.read_xml(f)
+            # Create a new processed sheet for each agency - NO NEW DATA HAS BEEN ADDED AND NO FORMATTING HAS BEEN DONE
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+            # Clean the data before injecting new content
+            # HERE WE WANT TO RUN THE AGENCY REFERENCE DF AGAINST THE NEW SHEET
+            temp_df = replace_column_names(temp_df, agency_ref, agency)
+            print(tabulate(temp_df.head(5), headers='keys', tablefmt='psql'))
+
+            # HERE WE ADD THE AGENCY COLUMN
+            # Create a new column with the file name for the agency at the leftmost portion of the dataframe
+            temp_df.insert(0, 'Agency', agency)
+            # data cleaning to remove the .csv
+            temp_df['Agency'] = temp_df['Agency'].replace('.xml', '', regex=True)
+
+            # Remove any underscores from the column headers
+            temp_df = temp_df.rename(columns=lambda name: name.replace('_', ' '))
+
             # Assign the Agency Unique ID (AUID)
             tindex = temp_df.index.astype(str)
             auid = f"{agency}-" + tindex
             temp_df.insert(0, 'auid', auid)
-            print(temp_df.head(5))
-            #
+
+            # add it to the updated dataframe to list
             li.append(temp_df)
+            # Send to LocationProcessing
+            temp_df = LocationProcessing.location_coding(temp_df)
+            print("After Location:")
+            print(temp_df.head(5))
+
+            # Here I want to ask the user what columns they wish to keep using the col_edit function
+            # print(final_columns)
             temp_df = col_edit(temp_df, final_columns)
-            # Now we move on to the actual combination of files into one document
+            print("After column edits")
+            print(temp_df.head(5))
+            # Now we save the modified agency file to its own separate file
             temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-            # temp_df.columns = map(str.lower, temp_df.columns)
+
             temp_df = temp_df[temp_df.columns.intersection(final_columns)]
+            print("After intersection")
+            print(temp_df.head(5))
+
+            # Add to the intersected list
             liz.append(temp_df)
             temp_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
             # print(temp_df.dtypes)
@@ -370,6 +440,7 @@ def main():
     print("Now we start the final process - concat")
     print(li)
     # Now we will attempt to concatenate our list of dataframes into one
+    # The ignore index part might be the issue here.
     df = pd.concat(li, axis=0, ignore_index=True)
     # Does above but for the data with the removed columns
     df2 = pd.concat(liz, axis=0, ignore_index=True)

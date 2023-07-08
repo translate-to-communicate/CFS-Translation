@@ -75,4 +75,13 @@ July 6
 - Functions created that: create a dictionary based on an external xlsx file, remove empty values from the <br> dictionary, and rename the headers of the dataframe based on that dictionary.
 
 July 7
+- Using a dataframe to properly assign the correct column headers to the agency files based on an external spreadsheet.
+- Fixed the "replace_column_name" function to catch KeyError
+- Removed unnecessary comments
+- Added a dictionary and list that pulls the agency name based on the file. Avoids asking the user questions for <br> agency name unless the name doesn't appear in the dictionary.
+- Currently, only 4 key steps are required before a user can run the program.
+  - Place all files that are to be used in the same directory
+  - Properly name the file based on the file naming convention
+  - Update the external spreadsheet to align with the common data standard designed for this system
+  - If using an API, update the API file to account for specific API requirements (usr/pass/token etc.)
 
