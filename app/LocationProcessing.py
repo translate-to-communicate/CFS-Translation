@@ -88,6 +88,7 @@ def location_coding(df):
         working_df['location (lat/long)'] = working_df['location (lat/long)'].astype(str)
         working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('\(|\)', '', regex=True)
         working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('POINT', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace(',', '', regex=True)
         for i in range(len(working_df['location (lat/long)'])):
             temp_lat_long = working_df['location (lat/long)'].iloc[i]
             if pd.isna(temp_lat_long):

@@ -94,5 +94,5 @@ July 10
   - Dispatch Date and Dispatch Time are processed, merged, and then dropped
   - Latitude and Longitude are processed, merged, and dropped
   - Agency, Incident Number, Call Type, Call Date/Time, Dispatch Date/Time, Block Address, and Location (Lat/Long) <br> are the columns that will remain at the end of processing. The agency specific columns are separated and stored in a separate file.
-  - 
+- Fixed an issue with some agencies having a double comma in the lat/long
 
