@@ -85,3 +85,14 @@ July 7
   - Update the external spreadsheet to align with the common data standard designed for this system
   - If using an API, update the API file to account for specific API requirements (usr/pass/token etc.)
 
+July 10
+- Fixed an issue that was causing concat issues
+- Added an AUID function to add the agency column and AUID column
+- Created a date_edits function to handle the varied date time formats that are ingested
+- Reworked the initial processing of columns from each agency - all agencies will have 12 total columns before the <br> agency and AUID columns are added.
+  - Call Date and Call Time are processed, merged, and then dropped
+  - Dispatch Date and Dispatch Time are processed, merged, and then dropped
+  - Latitude and Longitude are processed, merged, and dropped
+  - Agency, Incident Number, Call Type, Call Date/Time, Dispatch Date/Time, Block Address, and Location (Lat/Long) <br> are the columns that will remain at the end of processing. The agency specific columns are separated and stored in a separate file.
+  - 
+

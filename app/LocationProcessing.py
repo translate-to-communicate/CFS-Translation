@@ -2,9 +2,9 @@ from geopy.geocoders import Nominatim
 import time
 import pandas as pd
 import re
-import itertools
-
 import CFS
+
+pd.options.mode.chained_assignment = None
 
 
 def sort_nums(row):
@@ -25,8 +25,8 @@ def sort_nums(row):
     return numbers
 
 
-def search(myDict, lookup):
-    for key, value in myDict.items():
+def search(mydict, lookup):
+    for key, value in mydict.items():
         for v in value:
             if lookup in v:
                 return key
@@ -40,12 +40,11 @@ def location_coding(df):
             key_value = line.rstrip('\n').split(":")
             if len(key_value) == 2:
                 dict1[key_value[0]] = key_value[1]
-    # print(dict1)
 
     dict2 = {v: k for k, v in dict1.items()}  # Swap the dictionary around since the city name appeared before the abv.
     # print(dict2)
 
-    working_df = df
+    working_df = df.copy()
     new_columns = []
     for col in working_df:
         ncol = col  # Sets the new column (ncol) variable to the column name from the dataframe
@@ -58,16 +57,17 @@ def location_coding(df):
         # print(any(any(ncol in s for s in subList) for subList in dict1.values()))
         # print(search(dict1, ncol))
 
-        if 'latitude' in ncol:
-            ncol = 'latitude'
-        elif 'longitude' in ncol:
-            ncol = 'longitude'
-        elif 'city' in ncol:
-            working_df = working_df.replace({col: dict2})
+        # if 'latitude' in ncol:
+        #     ncol = 'latitude'
+        # elif 'longitude' in ncol:
+        #     ncol = 'longitude'
+        # elif 'city' in ncol:
+        #     working_df = working_df.replace({col: dict2})
         #
         new_columns.append(ncol)
 
     working_df.columns = new_columns
+    # print(working_df.columns)
 
     # Used to update the city name with something Nominatim can recognize
     # for col in working_df.columns:
@@ -84,10 +84,25 @@ def location_coding(df):
     # By priority, we will conduct geocoding work if necessary. No geocoding is required if Lat/Long information is
     # already given.
 
-    if 'latitude' in working_df.columns and 'longitude' in working_df.columns:
+    if 'location (lat/long)' in working_df.columns:
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].astype(str)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('\(|\)', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('POINT', '', regex=True)
+        for i in range(len(working_df['location (lat/long)'])):
+            temp_lat_long = working_df['location (lat/long)'].iloc[i]
+            if pd.isna(temp_lat_long):
+                pass
+            else:
+                temp_lat_long = temp_lat_long.split()
+                temp_lat_long.sort(reverse=True)
+                temp_lat_long = ', '.join(temp_lat_long)
+                working_df['location (lat/long)'].iloc[i] = temp_lat_long
+            i += 1
+
+    elif 'latitude' in working_df.columns and 'longitude' in working_df.columns:
         print("Merging latitude and longitude information.")
         working_df['location (lat/long)'] = \
-            working_df['latitude'].apply(str) + ' ' + working_df['longitude'].apply(str)
+            working_df['latitude'].apply(str) + ', ' + working_df['longitude'].apply(str)
         working_df.drop('latitude', axis=1, inplace=True)
         working_df.drop('longitude', axis=1, inplace=True)
 
@@ -102,15 +117,6 @@ def location_coding(df):
         working_df['location'] = working_df['location'].replace('\(|\)', '', regex=True)
         working_df['location'] = working_df['location'].replace('POINT', '', regex=True)
         working_df['location (lat/long)'] = working_df['location']
-        # Convert the location data to the correct order (many agencies use long/lat in their format
-        # i = 0
-        # for row in working_df['location (lat/long)']:
-        #     if pd.isna(working_df['location (lat/long)'].iloc[i]):
-        #         i += 1
-        #         pass
-        #     else:
-        #         working_df['location (lat/long)'].iloc[i] = sort_nums(working_df['location (lat/long)'].iloc[i])
-        # This code below works, but not with any empty row
         working_df['location (lat/long)'] = working_df['location (lat/long)'].apply(lambda row: sort_nums(row))
         working_df.drop('location', axis=1, inplace=True)
 

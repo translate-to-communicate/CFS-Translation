@@ -15,13 +15,80 @@ import os
 import glob
 import ctypes
 from datetime import date
-import easygui as eg
 import re
 
 import LocationProcessing
 import APIs
 
 auto_delete = ['http', 'https', ':@computed']
+
+
+# Assign the AUID and add the Agency column
+def auid_addition(primary_df, secondary_df, agency):
+    temp1_df = primary_df.copy()
+    temp2_df = secondary_df.copy()
+
+    # Create a new column with the file name for the agency at the leftmost portion of the dataframe
+    temp1_df.insert(0, 'Agency', agency)
+    temp2_df.insert(0, 'Agency', agency)
+    temp1_df['Agency'] = temp1_df['Agency'].replace('.csv', '', regex=True)
+    temp2_df['Agency'] = temp2_df['Agency'].replace('.csv', '', regex=True)
+
+    # Remove any underscores from the column headers
+    temp1_df = temp1_df.rename(columns=lambda name: name.replace('_', ' '))
+    temp2_df = temp2_df.rename(columns=lambda name: name.replace('_', ' '))
+
+    # Assign the Agency Unique ID (AUID)
+    tindex = temp1_df.index.astype(str)
+    auid = f"{agency}-" + tindex
+    temp1_df.insert(0, 'auid', auid)
+
+    tindex = temp2_df.index.astype(str)
+    auid = f"{agency}-" + tindex
+    temp2_df.insert(0, 'auid', auid)
+
+    return temp1_df, temp2_df
+
+
+def date_edits(primary_df):
+    temp_df = primary_df.copy()
+
+    if 'Call Date' in temp_df.columns and 'Call Time' in temp_df.columns:
+        temp_df['Call Date/Time'] = temp_df['Call Date'].astype(str) + ' ' + temp_df['Call Time'].astype(str)
+        temp_df['Call Date/Time'] = pd.to_datetime(temp_df['Call Date/Time'],
+                                                   format='mixed').dt.strftime('%Y-%m-%d %H:%M:%S')
+    elif 'Call Date/Time' in temp_df.columns:
+        temp_df['Call Date/Time'] = pd.to_datetime(temp_df['Call Date/Time'],
+                                                   format='mixed').dt.strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        print("No Call Date/Time information available")
+
+    if 'Dispatch Date' in temp_df.columns and 'Dispatch Time' in temp_df.columns:
+        temp_df['Dispatch Date/Time'] = temp_df['Dispatch Date'].astype(str) + ' ' + \
+                                        temp_df['Dispatch Time'].astype(str)
+        temp_df['Dispatch Date/Time'] = pd.to_datetime(temp_df['Dispatch Date/Time'],
+                                                       format='mixed').dt.strftime('%Y-%m-%d %H:%M:%S')
+    elif 'Dispatch Date/Time' in temp_df.columns:
+        temp_df['Dispatch Date/Time'] = pd.to_datetime(temp_df['Dispatch Date/Time'],
+                                                       format='mixed').dt.strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        print("No Dispatch Date/Time information available")
+
+    return temp_df
+
+
+def reindex_dataframes(list):
+    reindexed_dataframes = []
+    start_index = 0
+
+    for ndf in list:
+        end_index = start_index + len(ndf)
+        new_index = pd.RangeIndex(start=start_index, stop=end_index)
+        reindexed_df = ndf.set_index(new_index)
+        reindexed_dataframes.append(reindexed_df)
+        start_index = end_index
+
+    return reindexed_dataframes
 
 
 def column_creation():
@@ -60,19 +127,32 @@ def replace_column_headers(dataframe, dictionary):
                 break
         else:
             new_columns.append(column)
+
     df.columns = new_columns
 
     return df
 
 
-def replace_column_names(df_a, df_b, row_index):
+# This function renames the columns based on an external spreadsheet that the user must update to ensure the data
+# standard is met. If the agency does not exist within the spreadsheet the system will not rename any columns.
+# The current function also deletes the columns that are not a part of the data standard. An original copy of the data
+# is saved prior to the function being called. A future update should include a second copy that is only the agency
+# specific columns for future analysis or future reference.
+def replace_column_names(df_a, df_b, row_index):  # This function renames the columns based on an external spreadsheet
+    win = tk.Tk()
+    win.geometry("")
+    win.withdraw()
+
     # Make a copy of the dataframe to not mess with the original
     temp_df = df_a.copy()
-    # Get the values from the correct agency row DataFrame B (agency reference)
+    specific_df = df_a.copy()
+
     try:
+        # Get the values from the correct agency row DataFrame B (agency reference)
         column_name_check = df_b.loc[row_index].values
         # Create a list to map column names from DataFrame A to DataFrame B
         new_columns = []
+        specific_columns = []
         # Iterate over columns in DataFrame A
         for col in temp_df:
             # Check if the column name is present in the desired column names from DataFrame B
@@ -80,16 +160,20 @@ def replace_column_names(df_a, df_b, row_index):
                 # Get the index of the column name in column_names
                 index = list(column_name_check).index(col)
                 new_columns.append(df_b.columns[index])
+                specific_df.drop(col, axis=1, inplace=True)
             else:
                 # If the column name is not present in column_names, keep the original column name
-                new_columns.append(col)
+                specific_columns.append(col)
+                temp_df.drop(col, axis=1, inplace=True)
 
         # Rename columns in DataFrame A using the new columns list
         temp_df.columns = new_columns
+        specific_df.columns = specific_columns
+
     except KeyError:
         print("That agency is not listed in the reference")
 
-    return temp_df
+    return temp_df, specific_df
 
 
 def input_file_directory():
@@ -147,19 +231,20 @@ def camel_case_split(identifier):
 
 
 # Function to determine the number of empty rows in each column
-def blank_count(df):
-    working_df = df
-    # print(working_df.isna().sum())
-    print(f'{(working_df.isna().mean() * 100).round(2)}')
+# def blank_count(df):
+#     working_df = df
+#     # print(working_df.isna().sum())
+#     print(f'{(working_df.isna().mean() * 100).round(2)}')
 
 
 # Function to allow the user to select specific columns to keep; ones that are not considered mandatory.
 # It shows the first line of data from that column with information (blank info is skipped) as an example for the user
-def col_edit(df, final_columns):
+def col_edit(df, final_columns, agency):
     twin = tk.Tk()
     twin.withdraw()
     working_df = df
     columns_final = final_columns
+    agency_name = agency
 
     for col in working_df:
         ncol = col  # Sets the new column (ncol) variable to the column name from the dataframe
@@ -170,9 +255,10 @@ def col_edit(df, final_columns):
         # print(ncol)  # Displays the final resulting name of the new column for comparison
         # A loop that searches for any matching words from the new column and the 'final_columns' list
         if any(word in ncol for word in columns_final):
-            print(f"{col} column is mandatory.")
+            # print(f"{col} column is mandatory.")
+            pass
         elif any(word in ncol for word in auto_delete):
-            print(f"{col} column has been auto-removed")
+            # print(f"{col} column has been auto-removed")
             working_df.drop(col, axis=1, inplace=True)
         else:
             # Display a message that asks to delete the column and provide an example of data in that column
@@ -186,19 +272,20 @@ def col_edit(df, final_columns):
                 example = str(example)
 
             if any(word in example for word in auto_delete):
-                print(f"{col} column has been auto-removed.")
+                # print(f"{col} column has been auto-removed.")
                 working_df.drop(col, axis=1, inplace=True)
             else:
                 # percent_empty = (working_df[col].isna().mean() * 100).round(2)
                 # no_to_keep = 'Deleted'
-                result = mbox.askyesno('Column Selection', f"Do you want keep the following column: {col}? "
-                                                           f"An example of the data in this column is: {example}.")
+
+                result = mbox.askyesno(f'{agency_name}', f"Do you want keep the following column: {col}? "
+                                                         f"An example of the data in this column is: {example}.")
                 # User choice dictates either keeping or deleting the column
                 if result:
                     # print('User chose to keep the column')
                     pass
                 else:
-                    print(f'Deleting column: {col}')
+                    # print(f'Deleting column: {col}')
                     working_df.drop(col, axis=1, inplace=True)
                     # print(no_to_keep)
 
@@ -274,8 +361,8 @@ def main():
         agency_name = os.path.basename(f)
         head, sep, tail = agency_name.partition('_')
         file_dct[agency_name] = head
-        print(head)
-        print(agency_name)
+        # print(head)
+        # print(agency_name)
 
     print(file_dct)
 
@@ -283,11 +370,17 @@ def main():
         # Get the filename
         agency = os.path.basename(f)
         print(f"Now processing: {agency}")
+        agency_found = False
 
-        if agency in file_dct:
-            agency = file_dct[agency]
-        else:
-            agency = ask_agency(agency)  # Call the function to ask for user input on the agency name
+        # This check is only the file dictionary - not the external spreadsheet / reference sheet
+        while agency_found is False:
+            if agency in file_dct:
+                print(f"Found the agency: {file_dct[agency]}")
+                agency = file_dct[agency]
+                agency_found = True
+            else:
+                print("Agency was not found.")
+                agency = ask_agency(agency)  # Call the function to ask for user input on the agency name
 
         # Read in the document based on format
         if ".csv" in f:
@@ -296,26 +389,26 @@ def main():
             # Create a new processed sheet for each agency - NO NEW DATA HAS BEEN ADDED AND NO FORMATTING HAS BEEN DONE
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
             # Clean the data before injecting new content
-            # HERE WE WANT TO RUN THE AGENCY REFERENCE DF AGAINST THE NEW SHEET
-            temp_df = replace_column_names(temp_df, agency_ref, agency)
+
+            # HERE WE WANT TO RUN THE AGENCY REFERENCE DF AGAINST THE NEW SHEET AND RELABEL THE COLUMNS AS DEFINED
+            # IN THE EXTERNAL SPREADSHEET. AGENCY SPECIFIC COLUMNS ARE EXTRACTED AND SEPARATED INTO A NEW DF
+
+            temp_df, testing_df = replace_column_names(temp_df, agency_ref, agency)
+            print("This is the updated dataframe according to the data standard:")
             print(tabulate(temp_df.head(5), headers='keys', tablefmt='psql'))
+            print("This is the agency specific columns")
+            print(tabulate(testing_df.head(5), headers='keys', tablefmt='psql'))
 
-            # HERE WE ADD THE AGENCY COLUMN
-            # Create a new column with the file name for the agency at the leftmost portion of the dataframe
-            temp_df.insert(0, 'Agency', agency)
-            # data cleaning to remove the .csv
-            temp_df['Agency'] = temp_df['Agency'].replace('.csv', '', regex=True)
+            # Send to date_edits function to process date/time
+            temp_df = date_edits(temp_df)
 
-            # Remove any underscores from the column headers
-            temp_df = temp_df.rename(columns=lambda name: name.replace('_', ' '))
+            # Send the 2 dataframes to the AUID function to assign the AUID and add the agency column
+            temp_df, testing_df = auid_addition(temp_df, testing_df, agency)
 
-            # Assign the Agency Unique ID (AUID)
-            tindex = temp_df.index.astype(str)
-            auid = f"{agency}-" + tindex
-            temp_df.insert(0, 'auid', auid)
-
-            # add it to the updated dataframe to list
+            # Add the modified dataframe to the list
+            # Only the dataframe that is now in compliance with the data standard is added
             li.append(temp_df)
+
             # Send to LocationProcessing
             temp_df = LocationProcessing.location_coding(temp_df)
             print("After Location:")
@@ -323,15 +416,15 @@ def main():
 
             # Here I want to ask the user what columns they wish to keep using the col_edit function
             # print(final_columns)
-            temp_df = col_edit(temp_df, final_columns)
-            print("After column edits")
-            print(temp_df.head(5))
+            # temp_df = col_edit(temp_df, final_columns, agency)
+            # print("After column edits")
+            # print(temp_df.head(5))
             # Now we save the modified agency file to its own separate file
-            temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+            testing_df.to_csv(f"{opath}/02_Agency_Specific_{agency}.csv", index=False)
 
-            temp_df = temp_df[temp_df.columns.intersection(final_columns)]
-            print("After intersection")
-            print(temp_df.head(5))
+            # temp_df = temp_df[temp_df.columns.intersection(final_columns)]
+            # print("After intersection")
+            # print(temp_df.head(5))
 
             # Add to the intersected list
             liz.append(temp_df)
@@ -343,43 +436,41 @@ def main():
             # Create a new processed sheet for each agency - NO NEW DATA HAS BEEN ADDED AND NO FORMATTING HAS BEEN DONE
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
             # Clean the data before injecting new content
+
             # HERE WE WANT TO RUN THE AGENCY REFERENCE DF AGAINST THE NEW SHEET
-            temp_df = replace_column_names(temp_df, agency_ref, agency)
+            temp_df, testing_df = replace_column_names(temp_df, agency_ref, agency)
+            print("This is the updated dataframe according to the data standard:")
             print(tabulate(temp_df.head(5), headers='keys', tablefmt='psql'))
+            print("This is the agency specific columns")
+            print(tabulate(testing_df.head(5), headers='keys', tablefmt='psql'))
 
-            # HERE WE ADD THE AGENCY COLUMN
-            # Create a new column with the file name for the agency at the leftmost portion of the dataframe
-            temp_df.insert(0, 'Agency', agency)
-            # data cleaning to remove the .xlsx
-            temp_df['Agency'] = temp_df['Agency'].replace('.xlsx', '', regex=True)
+            # Send to date_edits function to process date/time
+            temp_df = date_edits(temp_df)
 
-            # Remove any underscores from the column headers
-            temp_df = temp_df.rename(columns=lambda name: name.replace('_', ' '))
+            # Send the 2 dataframes to the AUID function to assign the AUID and add the agency column
+            temp_df, testing_df = auid_addition(temp_df, testing_df, agency)
 
-            # Assign the Agency Unique ID (AUID)
-            tindex = temp_df.index.astype(str)
-            auid = f"{agency}-" + tindex
-            temp_df.insert(0, 'auid', auid)
-
-            # add it to the update dataframe list
+            # Add the modified dataframe to the list
+            # Only the dataframe that is now in compliance with the data standard is added
             li.append(temp_df)
 
             # Send to location service testing
             temp_df = LocationProcessing.location_coding(temp_df)
+            print("After Location:")
             print(temp_df.head(5))
 
             # Now call the function to ask about each column and return the updated dataframe
-            temp_df = col_edit(temp_df, final_columns)
-            print("After column edits")
-            print(temp_df.head(5))
+            # temp_df = col_edit(temp_df, final_columns, agency)
+            # print("After column edits")
+            # print(temp_df.head(5))
 
             # Save the modified agency file
-            temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+            temp_df.to_csv(f"{opath}/02_Agency_Specific_{agency}.csv", index=False)
 
             # Now we move on to the actual combination of files into one document
-            temp_df = temp_df[temp_df.columns.intersection(final_columns)]
-            print("After intersection")
-            print(temp_df.head(5))
+            # temp_df = temp_df[temp_df.columns.intersection(final_columns)]
+            # print("After intersection")
+            # print(temp_df.head(5))
 
             # Add to the intersected list
             liz.append(temp_df)
@@ -391,26 +482,23 @@ def main():
             # Create a new processed sheet for each agency - NO NEW DATA HAS BEEN ADDED AND NO FORMATTING HAS BEEN DONE
             temp_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
             # Clean the data before injecting new content
+
             # HERE WE WANT TO RUN THE AGENCY REFERENCE DF AGAINST THE NEW SHEET
-            temp_df = replace_column_names(temp_df, agency_ref, agency)
+            temp_df, testing_df = replace_column_names(temp_df, agency_ref, agency)
+            print("This is the updated dataframe according to the data standard:")
             print(tabulate(temp_df.head(5), headers='keys', tablefmt='psql'))
+            print("This is the agency specific columns")
+            print(tabulate(testing_df.head(5), headers='keys', tablefmt='psql'))
 
-            # HERE WE ADD THE AGENCY COLUMN
-            # Create a new column with the file name for the agency at the leftmost portion of the dataframe
-            temp_df.insert(0, 'Agency', agency)
-            # data cleaning to remove the .csv
-            temp_df['Agency'] = temp_df['Agency'].replace('.xml', '', regex=True)
+            # Send to date_edits function to process date/time
+            temp_df = date_edits(temp_df)
 
-            # Remove any underscores from the column headers
-            temp_df = temp_df.rename(columns=lambda name: name.replace('_', ' '))
-
-            # Assign the Agency Unique ID (AUID)
-            tindex = temp_df.index.astype(str)
-            auid = f"{agency}-" + tindex
-            temp_df.insert(0, 'auid', auid)
+            # Send the 2 dataframes to the AUID function to assign the AUID and add the agency column
+            temp_df, testing_df = auid_addition(temp_df, testing_df, agency)
 
             # add it to the updated dataframe to list
             li.append(temp_df)
+
             # Send to LocationProcessing
             temp_df = LocationProcessing.location_coding(temp_df)
             print("After Location:")
@@ -418,15 +506,16 @@ def main():
 
             # Here I want to ask the user what columns they wish to keep using the col_edit function
             # print(final_columns)
-            temp_df = col_edit(temp_df, final_columns)
-            print("After column edits")
-            print(temp_df.head(5))
-            # Now we save the modified agency file to its own separate file
-            temp_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
+            # temp_df = col_edit(temp_df, final_columns, agency)
+            # print("After column edits")
+            # print(temp_df.head(5))
 
-            temp_df = temp_df[temp_df.columns.intersection(final_columns)]
-            print("After intersection")
-            print(temp_df.head(5))
+            # Now we save the modified agency file to its own separate file
+            temp_df.to_csv(f"{opath}/02_Agency_Specific_{agency}.csv", index=False)
+
+            # temp_df = temp_df[temp_df.columns.intersection(final_columns)]
+            # print("After intersection")
+            # print(temp_df.head(5))
 
             # Add to the intersected list
             liz.append(temp_df)
@@ -437,22 +526,34 @@ def main():
             ctypes.windll.user32.MessageBoxW(0, f"This file format is not available"
                                                 f" to be converted at this time: {agency}", "Extension Error", 1)
             # print(f"The following file cannot be translated currently: {agency}")
-    print("Now we start the final process - concat")
-    print(li)
+    # print(li)
+
     # Now we will attempt to concatenate our list of dataframes into one
-    # The ignore index part might be the issue here.
-    df = pd.concat(li, axis=0, ignore_index=True)
+    print("Now we start the final process - concat")
+    reindexed_dataframes = reindex_dataframes(li)
+    # print(reindexed_dataframes)
+    for df in reindexed_dataframes:
+        print(df.index.tolist())
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # IT IS BREAKING HERE - IT DOES REDO THE INDEX FOR ALL THE DFS BUT IT WON'T CONCAT
+    #
+    df = pd.concat(reindexed_dataframes, axis=0)
+    # print(df.head(100))
+
     # Does above but for the data with the removed columns
-    df2 = pd.concat(liz, axis=0, ignore_index=True)
+    reindexed_dataframes = reindex_dataframes(liz)
+    # print(liz)
+    df2 = pd.concat(reindexed_dataframes, axis=0)
+    # print(df2.head(100))
     df2.reset_index(drop=True, inplace=True)
 
-    # Trying to get teh final columns to include anything that has the word
-    for col in df.columns:
-        new_col = col
-        if any(word in new_col for word in final_columns):
-            print(f"This column will remain: {new_col}")
-        else:
-            df.drop(col, axis=1, inplace=True)
+    # # Trying to get teh final columns to include anything that has the word
+    # for col in df.columns:
+    #     new_col = col
+    #     if any(word in new_col for word in final_columns):
+    #         print(f"This column will remain: {new_col}")
+    #     else:
+    #         df.drop(col, axis=1, inplace=True)
 
     uid = "CR"  # This is the uid for the project
     now = date.today()
