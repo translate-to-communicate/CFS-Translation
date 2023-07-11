@@ -99,6 +99,10 @@ def location_coding(df):
                 temp_lat_long = ', '.join(temp_lat_long)
                 working_df['location (lat/long)'].iloc[i] = temp_lat_long
             i += 1
+        if 'latitude' in working_df.columns:
+            working_df.drop('latitude', axis=1, inplace=True)
+        if 'longitude' in working_df.columns:
+            working_df.drop('longitude', axis=1, inplace=True)
 
     elif 'latitude' in working_df.columns and 'longitude' in working_df.columns:
         print("Merging latitude and longitude information.")

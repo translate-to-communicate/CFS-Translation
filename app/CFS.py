@@ -1,4 +1,4 @@
-# Updated 10JUL2023 19:09
+# Updated 11JUL2023 10:00
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
@@ -19,62 +19,9 @@ import re
 
 import LocationProcessing
 import APIs
+import Col_Edits
 
 auto_delete = ['http', 'https', ':@computed']
-
-
-# Assign the AUID and add the Agency column
-def auid_addition(primary_df, secondary_df, agency):
-    temp1_df = primary_df.copy()
-    temp2_df = secondary_df.copy()
-
-    # Create a new column with the file name for the agency at the leftmost portion of the dataframe
-    temp1_df.insert(0, 'Agency', agency)
-    temp2_df.insert(0, 'Agency', agency)
-    temp1_df['Agency'] = temp1_df['Agency'].replace('.csv', '', regex=True)
-    temp2_df['Agency'] = temp2_df['Agency'].replace('.csv', '', regex=True)
-
-    # Remove any underscores from the column headers
-    temp1_df = temp1_df.rename(columns=lambda name: name.replace('_', ' '))
-    temp2_df = temp2_df.rename(columns=lambda name: name.replace('_', ' '))
-
-    # Assign the Agency Unique ID (AUID)
-    tindex = temp1_df.index.astype(str)
-    auid = f"{agency}-" + tindex
-    temp1_df.insert(0, 'auid', auid)
-
-    tindex = temp2_df.index.astype(str)
-    auid = f"{agency}-" + tindex
-    temp2_df.insert(0, 'auid', auid)
-
-    return temp1_df, temp2_df
-
-
-def date_edits(primary_df):
-    temp_df = primary_df.copy()
-
-    if 'Call Date' in temp_df.columns and 'Call Time' in temp_df.columns:
-        temp_df['Call Date/Time'] = temp_df['Call Date'].astype(str) + ' ' + temp_df['Call Time'].astype(str)
-        temp_df['Call Date/Time'] = pd.to_datetime(temp_df['Call Date/Time'],
-                                                   format='mixed').dt.strftime('%Y-%m-%d %H:%M:%S')
-    elif 'Call Date/Time' in temp_df.columns:
-        temp_df['Call Date/Time'] = pd.to_datetime(temp_df['Call Date/Time'],
-                                                   format='mixed').dt.strftime('%Y-%m-%d %H:%M:%S')
-    else:
-        print("No Call Date/Time information available")
-
-    if 'Dispatch Date' in temp_df.columns and 'Dispatch Time' in temp_df.columns:
-        temp_df['Dispatch Date/Time'] = temp_df['Dispatch Date'].astype(str) + ' ' + \
-                                        temp_df['Dispatch Time'].astype(str)
-        temp_df['Dispatch Date/Time'] = pd.to_datetime(temp_df['Dispatch Date/Time'],
-                                                       format='mixed').dt.strftime('%Y-%m-%d %H:%M:%S')
-    elif 'Dispatch Date/Time' in temp_df.columns:
-        temp_df['Dispatch Date/Time'] = pd.to_datetime(temp_df['Dispatch Date/Time'],
-                                                       format='mixed').dt.strftime('%Y-%m-%d %H:%M:%S')
-    else:
-        print("No Dispatch Date/Time information available")
-
-    return temp_df
 
 
 def reindex_dataframes(list):
@@ -113,67 +60,6 @@ def remove_empty_values(dictionary):
         if cleaned_values:
             cleaned_dict[key] = cleaned_values
     return cleaned_dict
-
-
-def replace_column_headers(dataframe, dictionary):
-    # Create a copy of the DataFrame to avoid modifying the original
-    df = dataframe.copy()
-
-    new_columns = []
-    for column in df.columns:
-        for key, values in dictionary.items():
-            if column in values:
-                new_columns.append(key)
-                break
-        else:
-            new_columns.append(column)
-
-    df.columns = new_columns
-
-    return df
-
-
-# This function renames the columns based on an external spreadsheet that the user must update to ensure the data
-# standard is met. If the agency does not exist within the spreadsheet the system will not rename any columns.
-# The current function also deletes the columns that are not a part of the data standard. An original copy of the data
-# is saved prior to the function being called. A future update should include a second copy that is only the agency
-# specific columns for future analysis or future reference.
-def replace_column_names(df_a, df_b, row_index):  # This function renames the columns based on an external spreadsheet
-    win = tk.Tk()
-    win.geometry("")
-    win.withdraw()
-
-    # Make a copy of the dataframe to not mess with the original
-    temp_df = df_a.copy()
-    specific_df = df_a.copy()
-
-    try:
-        # Get the values from the correct agency row DataFrame B (agency reference)
-        column_name_check = df_b.loc[row_index].values
-        # Create a list to map column names from DataFrame A to DataFrame B
-        new_columns = []
-        specific_columns = []
-        # Iterate over columns in DataFrame A
-        for col in temp_df:
-            # Check if the column name is present in the desired column names from DataFrame B
-            if col in column_name_check:
-                # Get the index of the column name in column_names
-                index = list(column_name_check).index(col)
-                new_columns.append(df_b.columns[index])
-                specific_df.drop(col, axis=1, inplace=True)
-            else:
-                # If the column name is not present in column_names, keep the original column name
-                specific_columns.append(col)
-                temp_df.drop(col, axis=1, inplace=True)
-
-        # Rename columns in DataFrame A using the new columns list
-        temp_df.columns = new_columns
-        specific_df.columns = specific_columns
-
-    except KeyError:
-        print("That agency is not listed in the reference")
-
-    return temp_df, specific_df
 
 
 def input_file_directory():
@@ -327,7 +213,6 @@ def main():
     # Creates the Agency Reference Dataframe
     agency_ref = agency_reference()
 
-    # print(final_columns)
     # Open the file explorer to allow the user to select both the input and output directories
     # ipath is the input directory path and opath is the output directory path
     # There will be two versions of this directory information to allow for faster testing
@@ -393,17 +278,17 @@ def main():
             # HERE WE WANT TO RUN THE AGENCY REFERENCE DF AGAINST THE NEW SHEET AND RELABEL THE COLUMNS AS DEFINED
             # IN THE EXTERNAL SPREADSHEET. AGENCY SPECIFIC COLUMNS ARE EXTRACTED AND SEPARATED INTO A NEW DF
 
-            temp_df, testing_df = replace_column_names(temp_df, agency_ref, agency)
+            temp_df, testing_df = Col_Edits.replace_column_names(temp_df, agency_ref, agency)
             print("This is the updated dataframe according to the data standard:")
             print(tabulate(temp_df.head(5), headers='keys', tablefmt='psql'))
             print("This is the agency specific columns")
             print(tabulate(testing_df.head(5), headers='keys', tablefmt='psql'))
 
             # Send to date_edits function to process date/time
-            temp_df = date_edits(temp_df)
+            temp_df = Col_Edits.date_edits(temp_df)
 
             # Send the 2 dataframes to the AUID function to assign the AUID and add the agency column
-            temp_df, testing_df = auid_addition(temp_df, testing_df, agency)
+            temp_df, testing_df = Col_Edits.auid_addition(temp_df, testing_df, agency)
 
             # Add the modified dataframe to the list
             # Only the dataframe that is now in compliance with the data standard is added
@@ -438,17 +323,17 @@ def main():
             # Clean the data before injecting new content
 
             # HERE WE WANT TO RUN THE AGENCY REFERENCE DF AGAINST THE NEW SHEET
-            temp_df, testing_df = replace_column_names(temp_df, agency_ref, agency)
+            temp_df, testing_df = Col_Edits.replace_column_names(temp_df, agency_ref, agency)
             print("This is the updated dataframe according to the data standard:")
             print(tabulate(temp_df.head(5), headers='keys', tablefmt='psql'))
             print("This is the agency specific columns")
             print(tabulate(testing_df.head(5), headers='keys', tablefmt='psql'))
 
             # Send to date_edits function to process date/time
-            temp_df = date_edits(temp_df)
+            temp_df = Col_Edits.date_edits(temp_df)
 
             # Send the 2 dataframes to the AUID function to assign the AUID and add the agency column
-            temp_df, testing_df = auid_addition(temp_df, testing_df, agency)
+            temp_df, testing_df = Col_Edits.auid_addition(temp_df, testing_df, agency)
 
             # Add the modified dataframe to the list
             # Only the dataframe that is now in compliance with the data standard is added
@@ -484,17 +369,17 @@ def main():
             # Clean the data before injecting new content
 
             # HERE WE WANT TO RUN THE AGENCY REFERENCE DF AGAINST THE NEW SHEET
-            temp_df, testing_df = replace_column_names(temp_df, agency_ref, agency)
+            temp_df, testing_df = Col_Edits.replace_column_names(temp_df, agency_ref, agency)
             print("This is the updated dataframe according to the data standard:")
             print(tabulate(temp_df.head(5), headers='keys', tablefmt='psql'))
             print("This is the agency specific columns")
             print(tabulate(testing_df.head(5), headers='keys', tablefmt='psql'))
 
             # Send to date_edits function to process date/time
-            temp_df = date_edits(temp_df)
+            temp_df = Col_Edits.date_edits(temp_df)
 
             # Send the 2 dataframes to the AUID function to assign the AUID and add the agency column
-            temp_df, testing_df = auid_addition(temp_df, testing_df, agency)
+            temp_df, testing_df = Col_Edits.uid_addition(temp_df, testing_df, agency)
 
             # add it to the updated dataframe to list
             li.append(temp_df)

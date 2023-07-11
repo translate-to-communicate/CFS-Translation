@@ -96,3 +96,10 @@ July 10
   - Agency, Incident Number, Call Type, Call Date/Time, Dispatch Date/Time, Block Address, and Location (Lat/Long) <br> are the columns that will remain at the end of processing. The agency specific columns are separated and stored in a separate file.
 - Fixed an issue with some agencies having a double comma in the lat/long
 
+July 11
+- Separated the "replace_column_names", "date_edits", and "auid_addition" functions to a separate module
+- Modified the date_edits function to delete the "dispatch date", "dispatch time", "call date", "call time" <br> columns after processing
+- Modified the LocationProcessing module to delete any latitude and longitude columns after processing
+- Current final columns are:
+  - UID, AUID, Agency, Incident Number, Call Type, Block Address, Location(Lat/Long), Call Date/Time, Dispatch Date/Time
+
