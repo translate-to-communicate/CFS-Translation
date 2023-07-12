@@ -1,4 +1,4 @@
-# Updated 11JUL2023 10:00
+# Updated 12JUL2023 10:48
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
@@ -24,11 +24,11 @@ import Col_Edits
 auto_delete = ['http', 'https', ':@computed']
 
 
-def reindex_dataframes(list):
+def reindex_dataframes(li):
     reindexed_dataframes = []
     start_index = 0
 
-    for ndf in list:
+    for ndf in li:
         end_index = start_index + len(ndf)
         new_index = pd.RangeIndex(start=start_index, stop=end_index)
         reindexed_df = ndf.set_index(new_index)
@@ -236,7 +236,7 @@ def main():
 
     # API call
     if api_option:
-        li, liz = APIs.api_calls(opath, final_columns)
+        li, liz = APIs.api_calls(opath, agency_ref)
     else:
         print("No API calls")
 
@@ -379,7 +379,7 @@ def main():
             temp_df = Col_Edits.date_edits(temp_df)
 
             # Send the 2 dataframes to the AUID function to assign the AUID and add the agency column
-            temp_df, testing_df = Col_Edits.uid_addition(temp_df, testing_df, agency)
+            temp_df, testing_df = Col_Edits.auid_addition(temp_df, testing_df, agency)
 
             # add it to the updated dataframe to list
             li.append(temp_df)

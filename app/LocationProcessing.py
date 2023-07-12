@@ -84,11 +84,32 @@ def location_coding(df):
     # By priority, we will conduct geocoding work if necessary. No geocoding is required if Lat/Long information is
     # already given.
 
+    li_delete = ['"', ]
+
     if 'location (lat/long)' in working_df.columns:
         working_df['location (lat/long)'] = working_df['location (lat/long)'].astype(str)
+        # The following commands need to be consolidated into a more concise command, but this works for now
         working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('\(|\)', '', regex=True)
         working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('POINT', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('Point', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('type', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('coordinates', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('\]', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('\[', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('latitude', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('longitude', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('address', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('human', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('zip', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('state', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('city', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace(':', '', regex=True)
         working_df['location (lat/long)'] = working_df['location (lat/long)'].replace(',', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace("'", '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('{', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('}', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('"', '', regex=True)
+        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('_', '', regex=True)
         for i in range(len(working_df['location (lat/long)'])):
             temp_lat_long = working_df['location (lat/long)'].iloc[i]
             if pd.isna(temp_lat_long):

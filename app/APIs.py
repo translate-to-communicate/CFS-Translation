@@ -1,15 +1,17 @@
 import requests
-import CFS
+import Col_Edits
+import LocationProcessing
 import pandas as pd
 from sodapy import Socrata  # This is for the St. Pete API
+from tabulate import tabulate
 
 
 def api_yn():
     return False
 
 
-def api_calls(opath, final_columns):
-    columns_final = final_columns
+def api_calls(opath, agency_ref):
+    api_agency_ref = agency_ref
     api_li = []
     api_liz = []
     opath = opath
@@ -23,7 +25,7 @@ def api_calls(opath, final_columns):
     # The API call brings in 16 data fields (id, event_number, event_case_number, type_of_engagement, sub_engagement,
     # classification, display_address, crime_date, crime_time, latitude, longitude, location, submit_an_anonymous_tip,
     # neighborhood_name, council_district, and event_subtype_type_of_event).
-    agency = "St. Pete API"
+    agency = "St.Pete API"
     print(f"Starting {agency}")
     client = Socrata("stat.stpete.org",
                      myapptoken,
@@ -35,14 +37,35 @@ def api_calls(opath, final_columns):
         results = client.get("2eks-pg5j", limit=100)
         # Convert to pandas DataFrame
         results_df = pd.DataFrame.from_records(results)
-        results_df.insert(0, 'Agency', agency)
+        # Save the original data
         results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+
+        results_df, testing_df = Col_Edits.replace_column_names(results_df, api_agency_ref, agency)
+        print("This is the updated dataframe according to the data standard:")
+        print(tabulate(results_df.head(5), headers='keys', tablefmt='psql'))
+        print("This is the agency specific columns")
+        print(tabulate(testing_df.head(5), headers='keys', tablefmt='psql'))
+
+        # Send to date_edits function to process date/time
+        results_df = Col_Edits.date_edits(results_df)
+
+        # Send the 2 dataframes to the AUID function to assign the AUID and add the agency column
+        results_df, testing_df = Col_Edits.auid_addition(results_df, testing_df, agency)
+
+        # results_df.insert(0, 'Agency', agency)
+
         api_li.append(results_df)
 
-        results_df = CFS.col_edit(results_df, columns_final)
-        results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-        results_df = results_df[results_df.columns.intersection(columns_final)]
+        results_df = LocationProcessing.location_coding(results_df)
+        print("After Location:")
+        print(results_df.head(5))
+
+        # results_df = CFS.col_edit(results_df, columns_final)
+        testing_df.to_csv(f"{opath}/02_Agency_Specific_{agency}.csv", index=False)
+        # results_df = results_df[results_df.columns.intersection(columns_final)]
+
         api_liz.append(results_df)
+
         results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
     except requests.Timeout:
         print("Connection to St. Pete failed.")
@@ -62,13 +85,35 @@ def api_calls(opath, final_columns):
         results = client.get("98cc-bc7d", limit=100)
         # Convert to pandas DataFrame
         results_df = pd.DataFrame.from_records(results)
-        results_df.insert(0, 'Agency', agency)
+        # Save the original data
         results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+
+        results_df, testing_df = Col_Edits.replace_column_names(results_df, api_agency_ref, agency)
+        print("This is the updated dataframe according to the data standard:")
+        print(tabulate(results_df.head(5), headers='keys', tablefmt='psql'))
+        print("This is the agency specific columns")
+        print(tabulate(testing_df.head(5), headers='keys', tablefmt='psql'))
+
+        # Send to date_edits function to process date/time
+        results_df = Col_Edits.date_edits(results_df)
+
+        # Send the 2 dataframes to the AUID function to assign the AUID and add the agency column
+        results_df, testing_df = Col_Edits.auid_addition(results_df, testing_df, agency)
+
+        # results_df.insert(0, 'Agency', agency)
+
         api_li.append(results_df)
-        results_df = CFS.col_edit(results_df, columns_final)
-        results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-        results_df = results_df[results_df.columns.intersection(columns_final)]
+
+        results_df = LocationProcessing.location_coding(results_df)
+        print("After Location:")
+        print(results_df.head(5))
+
+        # results_df = CFS.col_edit(results_df, columns_final)
+        testing_df.to_csv(f"{opath}/02_Agency_Specific_{agency}.csv", index=False)
+        # results_df = results_df[results_df.columns.intersection(columns_final)]
+
         api_liz.append(results_df)
+
         results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
     except requests.Timeout:
         print("Connection to MCPD failed.")
@@ -88,18 +133,41 @@ def api_calls(opath, final_columns):
         results = client.get("nci8-thrr", limit=100)
         # Convert to pandas DataFrame
         results_df = pd.DataFrame.from_records(results)
-        results_df.insert(0, 'Agency', agency)
+        # Save the original data
         results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+
+        results_df, testing_df = Col_Edits.replace_column_names(results_df, api_agency_ref, agency)
+        print("This is the updated dataframe according to the data standard:")
+        print(tabulate(results_df.head(5), headers='keys', tablefmt='psql'))
+        print("This is the agency specific columns")
+        print(tabulate(testing_df.head(5), headers='keys', tablefmt='psql'))
+
+        # Send to date_edits function to process date/time
+        results_df = Col_Edits.date_edits(results_df)
+
+        # Send the 2 dataframes to the AUID function to assign the AUID and add the agency column
+        results_df, testing_df = Col_Edits.auid_addition(results_df, testing_df, agency)
+
+        # results_df.insert(0, 'Agency', agency)
+
         api_li.append(results_df)
-        results_df = CFS.col_edit(results_df, columns_final)
-        results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-        results_df = results_df[results_df.columns.intersection(columns_final)]
+
+        results_df = LocationProcessing.location_coding(results_df)
+        print("After Location:")
+        print(results_df.head(5))
+
+        # results_df = CFS.col_edit(results_df, columns_final)
+        testing_df.to_csv(f"{opath}/02_Agency_Specific_{agency}.csv", index=False)
+        # results_df = results_df[results_df.columns.intersection(columns_final)]
+
         api_liz.append(results_df)
+
         results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
     except requests.Timeout:
         print("Connection to NOPD failed.")
     except requests.RequestException:
         print("Unknown Error")
+
     # Seattle, WA PD
     agency = "Seattle API"
     print(f"Starting {agency}")
@@ -113,13 +181,35 @@ def api_calls(opath, final_columns):
         results = client.get("33kz-ixgy", limit=100)
         # Convert to pandas DataFrame
         results_df = pd.DataFrame.from_records(results)
-        results_df.insert(0, 'Agency', agency)
+        # Save the original data
         results_df.to_csv(f"{opath}/01_Original_{agency}.csv", index=False)
+
+        results_df, testing_df = Col_Edits.replace_column_names(results_df, api_agency_ref, agency)
+        print("This is the updated dataframe according to the data standard:")
+        print(tabulate(results_df.head(5), headers='keys', tablefmt='psql'))
+        print("This is the agency specific columns")
+        print(tabulate(testing_df.head(5), headers='keys', tablefmt='psql'))
+
+        # Send to date_edits function to process date/time
+        results_df = Col_Edits.date_edits(results_df)
+
+        # Send the 2 dataframes to the AUID function to assign the AUID and add the agency column
+        results_df, testing_df = Col_Edits.auid_addition(results_df, testing_df, agency)
+
+        # results_df.insert(0, 'Agency', agency)
+
         api_li.append(results_df)
-        results_df = CFS.col_edit(results_df, columns_final)
-        results_df.to_csv(f"{opath}/02_User_Modified_{agency}.csv", index=False)
-        results_df = results_df[results_df.columns.intersection(columns_final)]
+
+        results_df = LocationProcessing.location_coding(results_df)
+        print("After Location:")
+        print(results_df.head(5))
+
+        # results_df = CFS.col_edit(results_df, columns_final)
+        testing_df.to_csv(f"{opath}/02_Agency_Specific_{agency}.csv", index=False)
+        # results_df = results_df[results_df.columns.intersection(columns_final)]
+
         api_liz.append(results_df)
+
         results_df.to_csv(f"{opath}/03_Final_{agency}.csv", index=False)
     except requests.Timeout:
         print("Connection to Seattle PD failed.")

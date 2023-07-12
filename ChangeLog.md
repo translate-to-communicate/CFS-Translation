@@ -103,3 +103,6 @@ July 11
 - Current final columns are:
   - UID, AUID, Agency, Incident Number, Call Type, Block Address, Location(Lat/Long), Call Date/Time, Dispatch Date/Time
 
+July 12
+- Updated the location service to account for the APIs bringing in extra content to the location (lat/long) column
+- Addressed some minor errors in variable names
