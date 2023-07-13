@@ -1,4 +1,4 @@
-# Updated 12JUL2023 10:48
+# Updated 13JUL2023 11:02
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
@@ -350,7 +350,7 @@ def main():
             # print(temp_df.head(5))
 
             # Save the modified agency file
-            temp_df.to_csv(f"{opath}/02_Agency_Specific_{agency}.csv", index=False)
+            testing_df.to_csv(f"{opath}/02_Agency_Specific_{agency}.csv", index=False)
 
             # Now we move on to the actual combination of files into one document
             # temp_df = temp_df[temp_df.columns.intersection(final_columns)]
@@ -414,15 +414,15 @@ def main():
     # print(li)
 
     # Now we will attempt to concatenate our list of dataframes into one
-    print("Now we start the final process - concat")
-    reindexed_dataframes = reindex_dataframes(li)
-    # print(reindexed_dataframes)
-    for df in reindexed_dataframes:
-        print(df.index.tolist())
+    # print("Now we start the final process - concat")
+    # reindexed_dataframes = reindex_dataframes(li)
+    # # print(reindexed_dataframes)
+    # for df in reindexed_dataframes:
+    #     print(df.index.tolist())
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # IT IS BREAKING HERE - IT DOES REDO THE INDEX FOR ALL THE DFS BUT IT WON'T CONCAT
     #
-    df = pd.concat(reindexed_dataframes, axis=0)
+    # df = pd.concat(reindexed_dataframes, axis=0)
     # print(df.head(100))
 
     # Does above but for the data with the removed columns
@@ -447,8 +447,11 @@ def main():
     df2.index.name = 'uid'
     df2.index = f"{uid}-{now}-" + df2.index
 
-    df.to_csv(f"{opath}/SingleFile.csv")
-    df2.to_csv(f"{opath}/zzSingleFile.csv")
+    # df2 = Col_Edits.call_type_edit(df2)
+    df2['call type'] = df2['call type'].apply(Col_Edits.call_type_edit)
+
+    # df.to_csv(f"{opath}/SingleFile.csv")
+    df2.to_csv(f"{opath}/00_Final_Archival.csv")
     print('')
     print('The merged document contains the following columns:')
     for (columnName) in df2.columns:  # columnName inside a for loop works just as well.

@@ -1,5 +1,6 @@
 import pandas as pd
 import tkinter as tk
+import re
 
 
 # This function renames the columns based on an external spreadsheet that the user must update to ensure the data
@@ -32,7 +33,7 @@ def replace_column_names(df_a, df_b, row_index):  # This function renames the co
                 specific_df.drop(col, axis=1, inplace=True)
             else:
                 # If the column name is not present in column_names, keep the original column name
-                specific_columns.append(col)
+                specific_columns.append(col)  # This captures the column and stores it for the specific agency file
                 temp_df.drop(col, axis=1, inplace=True)
 
         # Rename columns in DataFrame A using the new columns list
@@ -93,9 +94,14 @@ def auid_addition(primary_df, secondary_df, agency):
 
     # Create a new column with the file name for the agency at the leftmost portion of the dataframe
     temp1_df.insert(0, 'Agency', agency)
-    temp2_df.insert(0, 'Agency', agency)
     temp1_df['Agency'] = temp1_df['Agency'].replace('.csv', '', regex=True)
-    temp2_df['Agency'] = temp2_df['Agency'].replace('.csv', '', regex=True)
+
+    if 'Agency' in temp2_df:
+        temp2_df.insert(0, 'Agency_CFS', agency)
+        temp2_df['Agency_CFS'] = temp2_df['Agency_CFS'].replace('.csv', '', regex=True)
+    else:
+        temp2_df.insert(0, 'Agency', agency)
+        temp2_df['Agency'] = temp2_df['Agency'].replace('.csv', '', regex=True)
 
     # Remove any underscores from the column headers
     temp1_df = temp1_df.rename(columns=lambda name: name.replace('_', ' '))
@@ -111,3 +117,17 @@ def auid_addition(primary_df, secondary_df, agency):
     temp2_df.insert(0, 'auid', auid)
 
     return temp1_df, temp2_df
+
+
+def call_type_edit(string):
+    if not type(string) == str:
+        new_string = str(string)
+    else:
+        new_string = string
+    clean_calltype = re.sub(r'^(=+|-+)', '', new_string)
+
+    # for i in range(len(new_df['call type'])):
+    #     clean_calltype = re.sub(r'^(=+|-+)', '', new_df['call type'].iloc[i])
+    #     new_df['call type'].iloc[i] = clean_calltype
+
+    return clean_calltype

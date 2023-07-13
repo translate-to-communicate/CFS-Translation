@@ -106,3 +106,10 @@ July 11
 July 12
 - Updated the location service to account for the APIs bringing in extra content to the location (lat/long) column
 - Addressed some minor errors in variable names
+- Removed data from dictionary.txt as it will likely be phased out
+
+July 13
+- Updated the LocationProcessing module to address the varied information picked up via the Location (Lat/Long) column
+- Added a function to Col_Edits that cleans the 'Call Type' column at the end - the issue was an agency used <br> "=--" or combinations of those to prepend the call type. This function removes those while preserving any that appear within the remaining string.
+- Modified the call_type_edit function to convert data to string if not in that format prior to operation
+- Added the Fort Lauderdale API connection

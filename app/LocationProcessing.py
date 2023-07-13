@@ -84,32 +84,35 @@ def location_coding(df):
     # By priority, we will conduct geocoding work if necessary. No geocoding is required if Lat/Long information is
     # already given.
 
-    li_delete = ['"', ]
-
     if 'location (lat/long)' in working_df.columns:
         working_df['location (lat/long)'] = working_df['location (lat/long)'].astype(str)
         # The following commands need to be consolidated into a more concise command, but this works for now
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('\(|\)', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('POINT', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('Point', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('type', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('coordinates', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('\]', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('\[', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('latitude', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('longitude', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('address', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('human', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('zip', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('state', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('city', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace(':', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace(',', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace("'", '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('{', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('}', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('"', '', regex=True)
-        working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('_', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('\(|\)', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('POINT', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('Point', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('type', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('coordinates', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('\]', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('\[', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('latitude', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('longitude', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('address', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('human', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('zip', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('state', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('city', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace(':', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace(',', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace("'", '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('{', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('}', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('"', '', regex=True)
+        # working_df['location (lat/long)'] = working_df['location (lat/long)'].replace('_', '', regex=True)
+        for i in range(len(working_df['location (lat/long)'])):
+            numbers_only = re.findall(r"-?\d+\.?\d*", working_df['location (lat/long)'].iloc[i])
+            result = ' '.join(numbers_only)
+            working_df['location (lat/long)'].iloc[i] = result
+
         for i in range(len(working_df['location (lat/long)'])):
             temp_lat_long = working_df['location (lat/long)'].iloc[i]
             if pd.isna(temp_lat_long):
@@ -124,6 +127,12 @@ def location_coding(df):
             working_df.drop('latitude', axis=1, inplace=True)
         if 'longitude' in working_df.columns:
             working_df.drop('longitude', axis=1, inplace=True)
+        if 'state' in working_df.columns:
+            working_df.drop('state', axis=1, inplace=True)
+        if 'city' in working_df.columns:
+            working_df.drop('city', axis=1, inplace=True)
+        if 'block address' in working_df.columns:
+            working_df.drop('block address', axis=1, inplace=True)
 
     elif 'latitude' in working_df.columns and 'longitude' in working_df.columns:
         print("Merging latitude and longitude information.")
@@ -131,12 +140,24 @@ def location_coding(df):
             working_df['latitude'].apply(str) + ', ' + working_df['longitude'].apply(str)
         working_df.drop('latitude', axis=1, inplace=True)
         working_df.drop('longitude', axis=1, inplace=True)
+        if 'state' in working_df.columns:
+            working_df.drop('state', axis=1, inplace=True)
+        if 'city' in working_df.columns:
+            working_df.drop('city', axis=1, inplace=True)
+        if 'block address' in working_df.columns:
+            working_df.drop('block address', axis=1, inplace=True)
 
     elif 'lat' in working_df.columns and 'long' in working_df.columns:
         print("Merging lat/long information.")
         working_df['location (lat/long)'] = working_df['lat'].apply(str) + ' ' + working_df['long'].apply(str)
         working_df.drop('lat', axis=1, inplace=True)
         working_df.drop('long', axis=1, inplace=True)
+        if 'state' in working_df.columns:
+            working_df.drop('state', axis=1, inplace=True)
+        if 'city' in working_df.columns:
+            working_df.drop('city', axis=1, inplace=True)
+        if 'block address' in working_df.columns:
+            working_df.drop('block address', axis=1, inplace=True)
 
     elif 'location' in working_df.columns:
         print("Working through location information.")
@@ -145,8 +166,14 @@ def location_coding(df):
         working_df['location (lat/long)'] = working_df['location']
         working_df['location (lat/long)'] = working_df['location (lat/long)'].apply(lambda row: sort_nums(row))
         working_df.drop('location', axis=1, inplace=True)
+        if 'state' in working_df.columns:
+            working_df.drop('state', axis=1, inplace=True)
+        if 'city' in working_df.columns:
+            working_df.drop('city', axis=1, inplace=True)
+        if 'block address' in working_df.columns:
+            working_df.drop('block address', axis=1, inplace=True)
 
-    elif 'block address' in working_df.columns and 'city name' in working_df.columns:
+    elif 'block address' in working_df.columns and 'city' in working_df.columns:
         print("Converting Block Address and City Name to a Lat/Long.")
         # Create a new column in the dataframe to store the merged information
         working_df['Merged Block and City'] = working_df['block address'] + ', ' + working_df['city name']
