@@ -136,8 +136,4 @@ def call_type_edit(string):
         new_string = string
     clean_calltype = re.sub(r'^(=+|-+)', '', new_string)
 
-    # for i in range(len(new_df['call type'])):
-    #     clean_calltype = re.sub(r'^(=+|-+)', '', new_df['call type'].iloc[i])
-    #     new_df['call type'].iloc[i] = clean_calltype
-
     return clean_calltype

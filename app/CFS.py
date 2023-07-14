@@ -1,8 +1,7 @@
-# Updated 14JUL2023 09:27
+# Updated 14JUL2023 10:20
 # Author: Christopher Romeo
 # This is the testing branch
-# Agency specification, column selection, .csv and .xlsx fully functional.
-# API access started, xml testing started (need a proper xml file).
+# XML files have not been tested
 import tkinter as tk
 from tkinter import *
 from tkinter.simpledialog import askstring
@@ -21,8 +20,6 @@ import LocationProcessing
 import APIs
 import Col_Edits
 
-auto_delete = ['http', 'https', ':@computed']
-
 
 def reindex_dataframes(li):
     reindexed_dataframes = []
@@ -36,15 +33,6 @@ def reindex_dataframes(li):
         start_index = end_index
 
     return reindexed_dataframes
-
-
-def column_creation():
-    columns_list = []
-    with open("Columns.txt", "r") as f:
-        for line in f:
-            words = line.strip().split(', ')
-            columns_list.extend(words)
-    return columns_list
 
 
 def agency_reference():
@@ -116,68 +104,6 @@ def camel_case_split(identifier):
     return [m.group(0) for m in matches]
 
 
-# Function to determine the number of empty rows in each column
-# def blank_count(df):
-#     working_df = df
-#     # print(working_df.isna().sum())
-#     print(f'{(working_df.isna().mean() * 100).round(2)}')
-
-
-# Function to allow the user to select specific columns to keep; ones that are not considered mandatory.
-# It shows the first line of data from that column with information (blank info is skipped) as an example for the user
-def col_edit(df, final_columns, agency):
-    twin = tk.Tk()
-    twin.withdraw()
-    working_df = df
-    columns_final = final_columns
-    agency_name = agency
-
-    for col in working_df:
-        ncol = col  # Sets the new column (ncol) variable to the column name from the dataframe
-        ncol = camel_case_split(ncol)  # Splits the column name based on if CamelCase is present (produces a list)
-        ncol = ' '.join(ncol)  # Joins the list back into a single string separated by a space
-        ncol = ncol.lower()  # Lowers the string to allow easy comparison to the 'final_columns' list
-        ncol = ncol.replace('_', ' ')  # Replaces the underscore with a space to allow better comparison
-        # print(ncol)  # Displays the final resulting name of the new column for comparison
-        # A loop that searches for any matching words from the new column and the 'final_columns' list
-        if any(word in ncol for word in columns_final):
-            # print(f"{col} column is mandatory.")
-            pass
-        elif any(word in ncol for word in auto_delete):
-            # print(f"{col} column has been auto-removed")
-            working_df.drop(col, axis=1, inplace=True)
-        else:
-            # Display a message that asks to delete the column and provide an example of data in that column
-            i = 0
-            example = working_df[col].iloc[i]
-            example = str(example)
-
-            while pd.isna(working_df[col].iloc[i]):  # The loop will bypass blank data
-                i += 1
-                example = working_df[col].iloc[i]
-                example = str(example)
-
-            if any(word in example for word in auto_delete):
-                # print(f"{col} column has been auto-removed.")
-                working_df.drop(col, axis=1, inplace=True)
-            else:
-                # percent_empty = (working_df[col].isna().mean() * 100).round(2)
-                # no_to_keep = 'Deleted'
-
-                result = mbox.askyesno(f'{agency_name}', f"Do you want keep the following column: {col}? "
-                                                         f"An example of the data in this column is: {example}.")
-                # User choice dictates either keeping or deleting the column
-                if result:
-                    # print('User chose to keep the column')
-                    pass
-                else:
-                    # print(f'Deleting column: {col}')
-                    working_df.drop(col, axis=1, inplace=True)
-                    # print(no_to_keep)
-
-    return working_df
-
-
 # Function to present the user with a window to acknowledge completion and provide a small preview of the data generated
 def final_message(df):
     def close():
@@ -209,7 +135,6 @@ def main():
     pd.set_option('display.width', None)
     pd.set_option('display.max_colwidth', None)
 
-    final_columns = column_creation()
     # Creates the Agency Reference Dataframe
     agency_ref = agency_reference()
 
@@ -248,8 +173,6 @@ def main():
         file_dct[agency_name] = head
         # print(head)
         # print(agency_name)
-
-    print(file_dct)
 
     for f in csv_files_csv:
         # Get the filename
@@ -299,17 +222,8 @@ def main():
             print("After Location:")
             print(temp_df.head(5))
 
-            # Here I want to ask the user what columns they wish to keep using the col_edit function
-            # print(final_columns)
-            # temp_df = col_edit(temp_df, final_columns, agency)
-            # print("After column edits")
-            # print(temp_df.head(5))
             # Now we save the modified agency file to its own separate file
             testing_df.to_csv(f"{opath}/02_Agency_Specific_{agency}.csv", index=False)
-
-            # temp_df = temp_df[temp_df.columns.intersection(final_columns)]
-            # print("After intersection")
-            # print(temp_df.head(5))
 
             # Add to the intersected list
             liz.append(temp_df)
@@ -344,18 +258,8 @@ def main():
             print("After Location:")
             print(temp_df.head(5))
 
-            # Now call the function to ask about each column and return the updated dataframe
-            # temp_df = col_edit(temp_df, final_columns, agency)
-            # print("After column edits")
-            # print(temp_df.head(5))
-
             # Save the modified agency file
             testing_df.to_csv(f"{opath}/02_Agency_Specific_{agency}.csv", index=False)
-
-            # Now we move on to the actual combination of files into one document
-            # temp_df = temp_df[temp_df.columns.intersection(final_columns)]
-            # print("After intersection")
-            # print(temp_df.head(5))
 
             # Add to the intersected list
             liz.append(temp_df)
@@ -389,18 +293,8 @@ def main():
             print("After Location:")
             print(temp_df.head(5))
 
-            # Here I want to ask the user what columns they wish to keep using the col_edit function
-            # print(final_columns)
-            # temp_df = col_edit(temp_df, final_columns, agency)
-            # print("After column edits")
-            # print(temp_df.head(5))
-
             # Now we save the modified agency file to its own separate file
             temp_df.to_csv(f"{opath}/02_Agency_Specific_{agency}.csv", index=False)
-
-            # temp_df = temp_df[temp_df.columns.intersection(final_columns)]
-            # print("After intersection")
-            # print(temp_df.head(5))
 
             # Add to the intersected list
             liz.append(temp_df)
@@ -411,19 +305,6 @@ def main():
             ctypes.windll.user32.MessageBoxW(0, f"This file format is not available"
                                                 f" to be converted at this time: {agency}", "Extension Error", 1)
             # print(f"The following file cannot be translated currently: {agency}")
-    # print(li)
-
-    # Now we will attempt to concatenate our list of dataframes into one
-    # print("Now we start the final process - concat")
-    # reindexed_dataframes = reindex_dataframes(li)
-    # # print(reindexed_dataframes)
-    # for df in reindexed_dataframes:
-    #     print(df.index.tolist())
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # IT IS BREAKING HERE - IT DOES REDO THE INDEX FOR ALL THE DFS BUT IT WON'T CONCAT
-    #
-    # df = pd.concat(reindexed_dataframes, axis=0)
-    # print(df.head(100))
 
     # Does above but for the data with the removed columns
     reindexed_dataframes = reindex_dataframes(liz)
@@ -431,14 +312,6 @@ def main():
     df2 = pd.concat(reindexed_dataframes, axis=0)
     # print(df2.head(100))
     df2.reset_index(drop=True, inplace=True)
-
-    # # Trying to get teh final columns to include anything that has the word
-    # for col in df.columns:
-    #     new_col = col
-    #     if any(word in new_col for word in final_columns):
-    #         print(f"This column will remain: {new_col}")
-    #     else:
-    #         df.drop(col, axis=1, inplace=True)
 
     uid = "CR"  # This is the uid for the project
     now = date.today()

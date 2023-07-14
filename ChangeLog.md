@@ -119,3 +119,5 @@ July 14
 - Updated the reference sheet to include city/state information if not present (user requirement)
 - Updated LocationProcessing module to support the new "City CFS" and "State CFS" columns - merges "block address" <br> and "city" to send to geoprocessing function
 - Added LAPD API
+- Removed excess/unused code
+- Added an if/else statement to catch empty dataframes resulting from an empty API pull
