@@ -1,0 +1,2 @@
+# Expanding the abbreviation for Virginia Beach as it is not recognized by the geopy service
+Virginia Beach:VAB
