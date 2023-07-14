@@ -1,4 +1,4 @@
-# Updated 13JUL2023 11:02
+# Updated 14JUL2023 09:27
 # Author: Christopher Romeo
 # This is the testing branch
 # Agency specification, column selection, .csv and .xlsx fully functional.
@@ -48,7 +48,7 @@ def column_creation():
 
 
 def agency_reference():
-    xls = ExcelFile("C:/Users/chris/Desktop/School Assignments/Summer/Agency Reference.xlsx")
+    xls = ExcelFile("Agency Reference.xlsx")
     df_dict = xls.parse(xls.sheet_names[0], index_col=0)
     return df_dict
 

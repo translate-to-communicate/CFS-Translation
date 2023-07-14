@@ -113,3 +113,9 @@ July 13
 - Added a function to Col_Edits that cleans the 'Call Type' column at the end - the issue was an agency used <br> "=--" or combinations of those to prepend the call type. This function removes those while preserving any that appear within the remaining string.
 - Modified the call_type_edit function to convert data to string if not in that format prior to operation
 - Added the Fort Lauderdale API connection
+
+July 14
+- Updated project to include "Agency Reference.xlsx" in the app folder
+- Updated the reference sheet to include city/state information if not present (user requirement)
+- Updated LocationProcessing module to support the new "City CFS" and "State CFS" columns - merges "block address" <br> and "city" to send to geoprocessing function
+- Added LAPD API

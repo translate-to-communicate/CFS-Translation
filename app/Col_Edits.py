@@ -40,6 +40,16 @@ def replace_column_names(df_a, df_b, row_index):  # This function renames the co
         temp_df.columns = new_columns
         specific_df.columns = specific_columns
 
+        if 'City' in temp_df:
+            print("There is already city information")
+        else:
+            temp_df.insert(0, 'City CFS', df_b.loc[row_index, 'City CFS'])
+
+        if 'State' in temp_df:
+            print("There is already state information")
+        else:
+            temp_df.insert(0, 'State CFS', df_b.loc[row_index, 'State CFS'])
+
     except KeyError:
         print("That agency is not listed in the reference")
 

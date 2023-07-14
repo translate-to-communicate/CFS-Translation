@@ -133,6 +133,10 @@ def location_coding(df):
             working_df.drop('city', axis=1, inplace=True)
         if 'block address' in working_df.columns:
             working_df.drop('block address', axis=1, inplace=True)
+        if 'state cfs' in working_df.columns:
+            working_df.drop('state cfs', axis=1, inplace=True)
+        if 'city cfs' in working_df.columns:
+            working_df.drop('city cfs', axis=1, inplace=True)
 
     elif 'latitude' in working_df.columns and 'longitude' in working_df.columns:
         print("Merging latitude and longitude information.")
@@ -146,6 +150,10 @@ def location_coding(df):
             working_df.drop('city', axis=1, inplace=True)
         if 'block address' in working_df.columns:
             working_df.drop('block address', axis=1, inplace=True)
+        if 'state cfs' in working_df.columns:
+            working_df.drop('state cfs', axis=1, inplace=True)
+        if 'city cfs' in working_df.columns:
+            working_df.drop('city cfs', axis=1, inplace=True)
 
     elif 'lat' in working_df.columns and 'long' in working_df.columns:
         print("Merging lat/long information.")
@@ -158,6 +166,10 @@ def location_coding(df):
             working_df.drop('city', axis=1, inplace=True)
         if 'block address' in working_df.columns:
             working_df.drop('block address', axis=1, inplace=True)
+        if 'state cfs' in working_df.columns:
+            working_df.drop('state cfs', axis=1, inplace=True)
+        if 'city cfs' in working_df.columns:
+            working_df.drop('city cfs', axis=1, inplace=True)
 
     elif 'location' in working_df.columns:
         print("Working through location information.")
@@ -172,21 +184,65 @@ def location_coding(df):
             working_df.drop('city', axis=1, inplace=True)
         if 'block address' in working_df.columns:
             working_df.drop('block address', axis=1, inplace=True)
+        if 'state cfs' in working_df.columns:
+            working_df.drop('state cfs', axis=1, inplace=True)
+        if 'city cfs' in working_df.columns:
+            working_df.drop('city cfs', axis=1, inplace=True)
 
     elif 'block address' in working_df.columns and 'city' in working_df.columns:
         print("Converting Block Address and City Name to a Lat/Long.")
         # Create a new column in the dataframe to store the merged information
-        working_df['Merged Block and City'] = working_df['block address'] + ', ' + working_df['city name']
+        working_df['Merged Block and City'] = working_df['block address'] + ', ' + working_df['city']
         # Create a new column to store the Lat/Long information
         # Works - commented out to allow faster testing for other processes
         # working_df['Geocoded Lat/Long'] = working_df['Merged Block and City'].apply(lambda row: geocoding(row))
+        if 'state' in working_df.columns:
+            working_df.drop('state', axis=1, inplace=True)
+        if 'city' in working_df.columns:
+            working_df.drop('city', axis=1, inplace=True)
+        if 'block address' in working_df.columns:
+            working_df.drop('block address', axis=1, inplace=True)
+        if 'state cfs' in working_df.columns:
+            working_df.drop('state cfs', axis=1, inplace=True)
+        if 'city cfs' in working_df.columns:
+            working_df.drop('city cfs', axis=1, inplace=True)
+
+    elif 'block address' in working_df.columns and 'city cfs' in working_df.columns:
+        print("Converting Block Address and City Name to a Lat/Long.")
+        # Create a new column in the dataframe to store the merged information
+        working_df['Merged Block and City'] = working_df['block address'] + ', ' + working_df['city cfs']
+        # Create a new column to store the Lat/Long information
+        # Works - commented out to allow faster testing for other processes
+        # working_df['Geocoded Lat/Long'] = working_df['Merged Block and City'].apply(lambda row: geocoding(row))
+        if 'state' in working_df.columns:
+            working_df.drop('state', axis=1, inplace=True)
+        if 'city' in working_df.columns:
+            working_df.drop('city', axis=1, inplace=True)
+        if 'block address' in working_df.columns:
+            working_df.drop('block address', axis=1, inplace=True)
+        if 'state cfs' in working_df.columns:
+            working_df.drop('state cfs', axis=1, inplace=True)
+        if 'city cfs' in working_df.columns:
+            working_df.drop('city cfs', axis=1, inplace=True)
 
     elif 'city' in working_df.columns and 'state' in working_df.columns:
         # temp_df.insert(3, 'merged location', (temp_df['block address'] + ' : ' + temp_df['location']))
         print("Merging city and state information.")
         working_df['city and state'] = working_df['city'] + ', ' + working_df['state']
+        if 'state' in working_df.columns:
+            working_df.drop('state', axis=1, inplace=True)
+        if 'city' in working_df.columns:
+            working_df.drop('city', axis=1, inplace=True)
+        if 'block address' in working_df.columns:
+            working_df.drop('block address', axis=1, inplace=True)
+        if 'state cfs' in working_df.columns:
+            working_df.drop('state cfs', axis=1, inplace=True)
+        if 'city cfs' in working_df.columns:
+            working_df.drop('city cfs', axis=1, inplace=True)
     else:
         print("No location information available")
+
+
 
     return working_df
 
