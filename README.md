@@ -1,6 +1,6 @@
 # CFS-Translation
 This project is aimed at providing a service for law enforcement data analysis professionals by ingesting, cleaning,<br>
-and combining calls-for-service (CFS) data (stored locally). The output is a single archivable document for future analysis.
+and combining calls-for-service (CFS) data (stored locally or via an API). The output is a single archivable document for future analysis.
 
 Features In Development
 - Single archivable document
